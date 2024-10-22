@@ -71,7 +71,7 @@ public class BasicHeader {
   /**
    * Intenta cargar los datos de una cabecera desde un InputStream ya abierto.   
    * Si tiene exito, los datos quedan en la clase.
-   * @param r el InputStream abierto.
+   * @param is el InputStream abierto.
    * @throws Exception  Si ocurre un error de entrada o salida.
    * @return true si la carga es correcta, false en otro caso
    */
