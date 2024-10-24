@@ -178,27 +178,30 @@ public class Main{
 
 
         FileOutputStream fos = new FileOutputStream(salida); // Abre el flujo de salida desde un fichero
-        OutputStream os = new BufferedOutputStream(fos); // Abre el flujo de salida desde un buffer
-        CipherOutputStream cos = new CipherOutputStream(os,c); // Abre el flujo de salida cifrado
+        //OutputStream os = new BufferedOutputStream(fos); // Abre el flujo de salida desde un buffer
+        CipherOutputStream cos = new CipherOutputStream(fos,c); // Abre el flujo de salida cifrado
 
         //Se guarda en el fichero, la cabecera.
         
-        header.save(os);
+        header.save(fos);
 
-        FileReader f = new FileReader(archivo); // Lee el archivo
-        BufferedReader b = new BufferedReader(f); // Para poder iterar sobre el archivo
+        //FileReader f = new FileReader(archivo); // Lee el archivo
+        FileInputStream f = new FileInputStream(archivo);
+        //BufferedReader b = new BufferedReader(f); // Para poder iterar sobre el archivo
+        f.read();
         
-        String cadena = b.readLine();
-
-        while(cadena!=null) {
-            cos.write(cadena.getBytes()); // Escribe en el flujo de salida cifrado
-            cadena = b.readLine();
+        
+        while(f.read() != -1) {
+            // cos.write(cadena.getBytes()); // Escribe en el flujo de salida cifrado
+            // cadena = b.readLine();
+            cos.write(f.read());
         }
 
-        os.close();
+        // os.close();
         fos.close();
         f.close();
-        b.close();
+        // b.close();
+        c.doFinal();
         
         //cos.close();
 
@@ -206,7 +209,7 @@ public class Main{
     }
 
     public static void crearFicheroGenera (Cipher c, String archivo) throws FileNotFoundException, IOException {
-        InputStream os = new BufferedInputStream(System.in);
+        FileInputStream os = new BufferedInputStream(System.in);
 
         CipherInputStream cos = new CipherInputStream(os,c);
 
@@ -265,7 +268,7 @@ public class Main{
 
         int numIteraciones = leerIntegerTeclado("Introduce el número de iteraciones que desea que haga el algoritmo: ");
 
-        Options confAlgoritmo = new Options();
+        //Options confAlgoritmo = new Options();
         //confAlgoritmo.setCipherAlgorithm(algoritmoCifrado);
         System.out.println("Conseguir algoritmo de cifrado: instancia");
         Cipher c = Cipher.getInstance(algoritmoCifrado);
@@ -285,9 +288,9 @@ public class Main{
         
 
         PBEParameterSpec pPS = new PBEParameterSpec(salt.clone(),numIteraciones);
+        SecretKey sKey = generacionClaveSesion(contrasena, algoritmoCifrado);
         System.out.println("MOSTRANDO POR PANTALLA EL SALT EN EL PBEPARAMETERSPEC: "+ pPS.getSalt().toString());
         System.out.println("MOSTRANDO POR PANTALLA EL TAMAÑO DEL SALT EN EL PBEPARAMETERSPEC: "+ pPS.getSalt().length);
-        SecretKey sKey = generacionClaveSesion(contrasena, algoritmoCifrado);
         // if(esCifrado)
             c.init(Cipher.ENCRYPT_MODE,sKey,pPS);
         // else
@@ -315,6 +318,11 @@ public class Main{
             CipherInputStream cis = new CipherInputStream(is, c);
 
             Header header = new Header();
+            System.out.println("DATOS GUARDADOS EN LA VARIABLE HEADER CARGADA: " + header.getData().toString());
+            System.out.println("DATOS GUARDADOS EN LA VARIABLE algorithm CARGADA: " + header.getAlgorithm1());
+            System.out.println("DATOS GUARDADOS EN LA VARIABLE operation CARGADA: " + header.getOperation());
+            System.out.println("DATOS GUARDADOS EN LA VARIABLE basic data CARGADA: " + header.getbasicData().toString());
+
             header.load(is);
             
 
