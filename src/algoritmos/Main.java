@@ -28,21 +28,30 @@ public class Main{
         
         //Se pide al usuario si quiere cifrar o descifrar
         boolean esCifrado = elegirCifradoDescifrado();
-        
+        if(esCifrado){
+
         //Se pide al usuario el algoritmo de cifrado
         String algoritmoCifrado = solicitarAlgoritmoCifrado();
-        
-        
-
 
         //CONFIGURACIÓN DE LOS ALGORITMOS DE CIFRADO
         Cipher c = configuracionAlgoritmo(esCifrado,algoritmoCifrado);
         
-        String ubicacionFichero = "C:\\Users\\celia\\eclipse-workspace-pbd\\cryptoEngineSRT\\src\\algoritmos\\documento.txt";
+        // String ubicacionFicheroCifrado = "C:\\Users\\celia\\eclipse-workspace-pbd\\cryptoEngineSRT\\src\\algoritmos\\documento.txt";
 
-        CipherOutputStream cos = escribirFicheroSalida(c,ubicacionFichero);
+        // CipherOutputStream cos = escribirFicheroSalida(c,ubicacionFicheroCifrado, esCifrado);
 
-        System.out.println(c.doFinal());
+        // System.out.println(c.doFinal());
+        // cos.close();
+        }
+        else{
+            String ubicacionFicheroDescifrado = "C:\\Users\\celia\\eclipse-workspace-pbd\\cryptoEngineSRT\\src\\algoritmos\\documento.txt.cif";
+            String algoritmoCifrado = Options.PBEAlgorithms[1]; //TODO QUITAR ESTA LINEA DE CODIGO
+            Cipher c = configuracionAlgoritmo(esCifrado,algoritmoCifrado);
+            // CipherOutputStream cos = escribirFicheroSalida(c,ubicacionFicheroDescifrado, esCifrado);
+            // cos.close();
+            
+
+        }
         
     }
 
@@ -71,7 +80,7 @@ public class Main{
         int alCifrado = -1;
         while (alCifrado < 0 || alCifrado >= Options.cipherAlgorithms.length) {
             for (int i = 0; i<Options.cipherAlgorithms.length; i++) {
-                System.out.println(Options.cipherAlgorithms[i]);
+                System.out.println(i+". "+Options.cipherAlgorithms[i]);
             }
             alCifrado = leerIntegerTeclado("Elige un algoritmo de cifrado: ");
         }
@@ -157,12 +166,24 @@ public class Main{
      * @throws IOException Si hay un error al leer el archivo
      * @throws Exception Si hay un error al cifrar el archivo
      */
-    public static CipherOutputStream escribirFicheroSalida (Cipher c, String archivo) throws FileNotFoundException, IOException {
-        String salida = archivo+".cif";
+    public static CipherOutputStream escribirFicheroSalida (Cipher c, String archivo, boolean esCifrado, Header header) throws FileNotFoundException, IOException, Exception {
+        String salida;
+        if (esCifrado)
+             salida = archivo+".cif";
+        else
+             salida = archivo+".asc";
         
+        
+        
+
+
         FileOutputStream fos = new FileOutputStream(salida); // Abre el flujo de salida desde un fichero
         OutputStream os = new BufferedOutputStream(fos); // Abre el flujo de salida desde un buffer
         CipherOutputStream cos = new CipherOutputStream(os,c); // Abre el flujo de salida cifrado
+
+        //Se guarda en el fichero, la cabecera.
+        
+        header.save(os);
 
         FileReader f = new FileReader(archivo); // Lee el archivo
         BufferedReader b = new BufferedReader(f); // Para poder iterar sobre el archivo
@@ -178,7 +199,8 @@ public class Main{
         fos.close();
         f.close();
         b.close();
-        // cos.close();
+        
+        //cos.close();
 
         return cos;
     }
@@ -200,14 +222,14 @@ public class Main{
 
 
         // }
-        String cadena;
-        FileWriter f = new FileWriter("archivoGenerado"); // Leer el archivo
-        BufferedReader b = new BufferedReader(f); // Para poder iterar sobre el archivo
-        while((cadena = b.readLine())!=null) {
-            System.out.println(cadena);
-            // TODO: Procesar la cadena
-        }
-        b.close();
+        // String cadena;
+        // FileWriter f = new FileWriter("archivoGenerado"); // Leer el archivo
+        // BufferedReader b = new BufferedReader(f); // Para poder iterar sobre el archivo
+        // while((cadena = b.readLine())!=null) {
+        //     System.out.println(cadena);
+        //     // TODO: Procesar la cadena
+        // }
+        // b.close();
     }
 
 
@@ -244,21 +266,93 @@ public class Main{
         int numIteraciones = leerIntegerTeclado("Introduce el número de iteraciones que desea que haga el algoritmo: ");
 
         Options confAlgoritmo = new Options();
-        confAlgoritmo.setCipherAlgorithm(algoritmoCifrado);
+        //confAlgoritmo.setCipherAlgorithm(algoritmoCifrado);
         System.out.println("Conseguir algoritmo de cifrado: instancia");
         Cipher c = Cipher.getInstance(algoritmoCifrado);
-
         SecureRandom random = SecureRandom.getInstance("DEFAULT", "BC");
-        byte[] salt = random.generateSeed(8);
-
-        PBEParameterSpec pPS = new PBEParameterSpec(salt,numIteraciones);
-        SecretKey sKey = generacionClaveSesion(contrasena, algoritmoCifrado);
-        if(esCifrado)
-            c.init(Cipher.ENCRYPT_MODE,sKey,pPS);
-        else
-            c.init(Cipher.DECRYPT_MODE,sKey,pPS);
+        if (esCifrado) {
             
         
+        byte[] salt = random.generateSeed(8);
+        System.out.println("Tamaño del código salt: " + salt.length);
+        System.out.println("Codigo guardado en salt: "+salt.toString()+"---------------");
+        // byte[] salt;
+        // if(esCifrado){
+
+        // SecureRandom random = SecureRandom.getInstance("DEFAULT", "BC");
+        // salt = random.generateSeed(8);
+        // }
+        
+
+        PBEParameterSpec pPS = new PBEParameterSpec(salt.clone(),numIteraciones);
+        System.out.println("MOSTRANDO POR PANTALLA EL SALT EN EL PBEPARAMETERSPEC: "+ pPS.getSalt().toString());
+        System.out.println("MOSTRANDO POR PANTALLA EL TAMAÑO DEL SALT EN EL PBEPARAMETERSPEC: "+ pPS.getSalt().length);
+        SecretKey sKey = generacionClaveSesion(contrasena, algoritmoCifrado);
+        // if(esCifrado)
+            c.init(Cipher.ENCRYPT_MODE,sKey,pPS);
+        // else
+        //     c.init(Cipher.DECRYPT_MODE,sKey,pPS);
+            
+        
+        // System.out.println("IV guardado en la clase cipher: "+c.getIV()+ "----------------");
+        Header header = new Header(Options.OP_SYMMETRIC_CIPHER,algoritmoCifrado,Options.PBEAlgorithms[0],salt);
+
+        
+
+        System.out.println("DATOS GUARDADOS EN LA VARIABLE HEADER CARGADA: " + header.getData().toString());
+            System.out.println("DATOS GUARDADOS EN LA VARIABLE algorithm CARGADA: " + header.getAlgorithm1());
+            System.out.println("DATOS GUARDADOS EN LA VARIABLE operation CARGADA: " + header.getOperation());
+            System.out.println("DATOS GUARDADOS EN LA VARIABLE basic data CARGADA: " + header.getbasicData().toString());
+
+        String ubicacionFicheroCifrado = "C:\\Users\\celia\\eclipse-workspace-pbd\\cryptoEngineSRT\\src\\algoritmos\\documento.txt";
+
+        CipherOutputStream cos = escribirFicheroSalida(c,ubicacionFicheroCifrado, esCifrado, header);
+        cos.close();
+
+        }
+        else{
+            InputStream is = new FileInputStream("C:\\Users\\celia\\eclipse-workspace-pbd\\cryptoEngineSRT\\src\\algoritmos\\documento.txt.cif");
+            CipherInputStream cis = new CipherInputStream(is, c);
+
+            Header header = new Header();
+            header.load(is);
+            
+
+            System.out.println("DATOS GUARDADOS EN LA VARIABLE HEADER CARGADA: " + header.getData().toString());
+            System.out.println("DATOS GUARDADOS EN LA VARIABLE algorithm CARGADA: " + header.getAlgorithm1());
+            System.out.println("DATOS GUARDADOS EN LA VARIABLE operation CARGADA: " + header.getOperation());
+            System.out.println("DATOS GUARDADOS EN LA VARIABLE basic data CARGADA: " + header.getbasicData().toString());
+
+            byte[] salt = header.getData();
+        // byte[] salt;
+        // if(esCifrado){
+
+        // SecureRandom random = SecureRandom.getInstance("DEFAULT", "BC");
+        // salt = random.generateSeed(8);
+        // }
+        
+
+        PBEParameterSpec pPS = new PBEParameterSpec(salt,numIteraciones);
+        System.out.println("MOSTRANDO POR PANTALLA EL SALT EN EL PBEPARAMETERSPEC: "+ pPS.getSalt().toString());
+        
+        System.out.println("MOSTRANDO POR PANTALLA EL TAMAÑO DEL SALT EN EL PBEPARAMETERSPEC: "+ pPS.getSalt().length);
+        SecretKey sKey = generacionClaveSesion(contrasena, header.getAlgorithm1());
+        
+        //SE INICIALIZA EL ALGORITMO
+            c.init(Cipher.DECRYPT_MODE,sKey,pPS);   
+            
+        
+        // System.out.println("IV guardado en la clase cipher: "+c.getIV()+ "----------------");
+        // System.out.println("Codigo guardado en salt: "+salt+"---------------");
+
+
+        String ubicacionFicheroCifrado = "C:\\Users\\celia\\eclipse-workspace-pbd\\cryptoEngineSRT\\src\\algoritmos\\documento.txt.cif";
+
+        CipherOutputStream cos = escribirFicheroSalida(c,ubicacionFicheroCifrado, esCifrado, header);
+        cos.close();
+        is.close();
+        cis.close();
+        }
 
         return c;
     }
