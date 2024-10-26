@@ -3,10 +3,9 @@
  cifrado PBE (Password-Based Encryption) con el modo de operación CBC (Cipher Block
  Chaining).
 
-# Para este proyecto, se ha utilizado los siguientes conceptos y librerías:
-# - El algoritmo de cifrado PBE, que utiliza una contraseña para cifrar y
-#   descifrar archivos.
-# - La API de Bouncy Castle, que nos proporciona métodos adecuadods para raelizar algoritmos de cifrado
-# - Las librerías J2SDK.
-# - La librería "Swing" para configurar la GUI.
-# - La librería "javax.crypto" para realizar operaciones de cifrado y descifrado.
+ Para este proyecto, se ha utilizado los siguientes conceptos y librerías:
+- El algoritmo de cifrado PBE, que utiliza una contraseña para cifrar y descifrar archivos.
+ - La API de Bouncy Castle, que nos proporciona métodos adecuadods para raelizar algoritmos de cifrado
+ - Las librerías J2SDK.
+ - La librería "Swing" para configurar la GUI.
+ - La librería "javax.crypto" para realizar operaciones de cifrado y descifrado.
