@@ -154,7 +154,7 @@ public class GUI extends JFrame {
             updateDestinationFile();
             if (validateInputs()) {
                 try {
-                    LogicaCifrado.processingCipher(getFileName(), getPassword(), getAlgorithm(), getIterations());
+                    PBEActivity.processingCipher(getFileName(), getPassword(), getAlgorithm(), getIterations());
                     JOptionPane.showMessageDialog(this, "Cifrado completado");
 
                 } catch (Exception ex) {
@@ -169,7 +169,7 @@ public class GUI extends JFrame {
             if (validateInputs()) {
 
                 try {
-                    LogicaCifrado.processingDecipher(getFileName(), getPassword(), getIterations());
+                    PBEActivity.processingDecipher(getFileName(), getPassword(), getIterations());
                     JOptionPane.showMessageDialog(this, "Descifrado completado");
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this, "Ha ocurrido un error al descifrar.");
@@ -234,7 +234,7 @@ public class GUI extends JFrame {
         // Validar que las contraseñas coincidan
         String pass1 = new String(passwordField.getPassword());
         String pass2 = new String(confirmPassword.getPassword());
-        if (!LogicaCifrado.contrasenaSegura(pass1)) {
+        if (!PBEActivity.securePassword(pass1)) {
             JOptionPane.showMessageDialog(this,
                     "La contraseña debe contener, al menos, 8 caracteres.",
                     "Error", JOptionPane.ERROR_MESSAGE);
