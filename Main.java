@@ -7,10 +7,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import javax.crypto.*;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.security.SecureRandom;
 import java.security.Security;
 
@@ -200,12 +197,13 @@ public class Main {
         }
 
         try {
-            int tamano = 8;
             FileInputStream fis = new FileInputStream(archivo);
-            byte[] contenido = new byte[tamano];
-            while (fis.read(contenido, 0, tamano) > 0) {
-                cos.write(contenido);
+            byte[] contenido = new byte[fis.available()];
+            while (fis.read(contenido, 0, fis.available()) > 0) {
+                cos.write(contenido, 0, contenido.length);
             }
+            cos.close();
+
             fis.close();
             exito = true;
         } catch (FileNotFoundException e) {
@@ -223,21 +221,17 @@ public class Main {
      * @return true si se ha descifrado correctamente, y false en caso contrario
      * @throws Exception
      */
-    public static boolean escribirFicheroDescifrado(Cipher c, String archivo) throws Exception {
+    public static boolean escribirFicheroDescifrado(Cipher c, String archivo, FileInputStream fis) throws Exception {
         String salida = archivo + ".cla";
 
         FileOutputStream fos = new FileOutputStream(salida); // Abre el flujo de salida desde un fichero
 
         boolean exito = false;
         try {
-            int tamano = 8;
-            FileInputStream fis = new FileInputStream(archivo);
             CipherInputStream cis = new CipherInputStream(fis, c);
-
-            byte[] contenido = new byte[tamano];
-            // TODO ESTO DA FALLO AL LEER LOS ÚLTIMOS BYTES
-            while (cis.read(contenido)!=0) {
-                fos.write(contenido);
+            byte[] contenido = new byte[fis.available()];
+            while (cis.read(contenido, 0, fis.available())>0) {
+                fos.write(contenido, 0, contenido.length);
             }
             fis.close();
             exito = true;
@@ -320,7 +314,7 @@ public class Main {
             PBEParameterSpec pPS = new PBEParameterSpec(salt, numIteraciones);
             c.init(Cipher.DECRYPT_MODE, sKey, pPS);
 
-            if(!escribirFicheroDescifrado(c, fichero)) {
+            if(!escribirFicheroDescifrado(c, fichero,fis)) {
                 System.out.println("Error al descifrar el fichero");
             } else {
                 System.out.println("El fichero se ha descifrado correctamente");
