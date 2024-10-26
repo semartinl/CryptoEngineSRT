@@ -40,13 +40,14 @@ public class PBEActivity {
         Cipher c = Cipher.getInstance(algoritmoCifrado);
 
         SecretKey sKey = generateSessionKey(password, algoritmoCifrado);
+
         byte[] salt;
         SecureRandom random = SecureRandom.getInstance("DEFAULT", "BC");
         salt = random.generateSeed(8);
 
         PBEParameterSpec pPS = new PBEParameterSpec(salt, numIteraciones);
-        c.init(Cipher.ENCRYPT_MODE, sKey, pPS);
 
+        c.init(Cipher.ENCRYPT_MODE, sKey, pPS);
 
         Header h = new Header(Options.OP_SYMMETRIC_CIPHER, algoritmoCifrado,
                 Options.authenticationAlgorithms[0], salt);
@@ -73,11 +74,14 @@ public class PBEActivity {
         if (h.load(fis)) {
             String algoritmoCifrado = h.getAlgorithm1();
             byte[] salt = h.getData();
+
             Options confAlgoritmo = new Options();
             confAlgoritmo.setCipherAlgorithm(algoritmoCifrado);
             Cipher c = Cipher.getInstance(algoritmoCifrado);
+
             SecretKey sKey = generateSessionKey(password, algoritmoCifrado);
             PBEParameterSpec pPS = new PBEParameterSpec(salt, numIteraciones);
+
             c.init(Cipher.DECRYPT_MODE, sKey, pPS);
 
             if (!writeDecipheredText(c, fichero, fis)) {
@@ -116,13 +120,14 @@ public class PBEActivity {
             while ((bytesRead = fis.read(buffer)) > -1) {
                 cos.write(buffer, 0, bytesRead);
             }
-            cos.close();
 
             fis.close();
             success = true;
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+
+        cos.close();
         fos.close();
 
         return success;
@@ -135,7 +140,7 @@ public class PBEActivity {
      * @param filename El nombre del fichero a descifrar
      * @param fis      El flujo de entrada inicializado tras haber leído la cabecera
      * @return true si se ha descifrado correctamente, y false en caso contrario
-     * @throws Exception
+     * @throws Exception Si hay un error al descifrar
      */
     public static boolean writeDecipheredText(Cipher c, String filename, FileInputStream fis) throws Exception {
         String outFile = filename + ".cla";
@@ -157,6 +162,7 @@ public class PBEActivity {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+
         fos.close();
 
         return success;
@@ -188,7 +194,6 @@ public class PBEActivity {
      * @return boolean True si la contraseña es segura, false en caso contrario
      */
     public static boolean securePassword(String password) {
-
         return password.length() >= 8;
     }
 
