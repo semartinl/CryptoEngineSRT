@@ -7,5 +7,6 @@
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="lib" path="C:/Users/celia/OneDrive - Universidad de Extremadura/Escritorio/Sergio/Uni/4º-curso/1º-cuatri/SRT/Prácticas-laboratorios/Practicas-cripto-Java/Bouncy Castle/bcc_lastversion/bcprov-jdk18on-176.jar"/>
+	<classpathentry excluding="src/" kind="src" path=""/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
