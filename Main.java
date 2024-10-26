@@ -22,7 +22,7 @@ public class Main {
         boolean fin = false;
         while (!fin) {
 
-            String fichero = solicitarFichero();
+            String fichero;
 
             boolean esCifrado = elegirCifradoDescifrado();
 
@@ -42,15 +42,6 @@ public class Main {
         }
 
 
-    }
-
-    /**
-     * Solicita un fichero por teclado //TODO
-     * @return El nombre del fichero
-     */
-    static String solicitarFichero() {
-        String fichero = "C:\\Users\\sarag\\Documents\\GitHub\\SRT\\prueba1.txt.cif"; //TODO
-        return fichero;
     }
 
     /**
@@ -198,9 +189,10 @@ public class Main {
 
         try {
             FileInputStream fis = new FileInputStream(archivo);
-            byte[] contenido = new byte[fis.available()];
-            while (fis.read(contenido, 0, fis.available()) > 0) {
-                cos.write(contenido, 0, contenido.length);
+            byte[] contenido = new byte[1024];
+            int leidos;
+            while ((leidos = fis.read(contenido)) > -1) {
+                cos.write(contenido, 0, leidos);
             }
             cos.close();
 
@@ -229,10 +221,13 @@ public class Main {
         boolean exito = false;
         try {
             CipherInputStream cis = new CipherInputStream(fis, c);
-            byte[] contenido = new byte[fis.available()];
-            while (cis.read(contenido, 0, fis.available())>0) {
-                fos.write(contenido, 0, contenido.length);
+
+            byte[] contenido = new byte[1024];
+            int leidos;
+            while ((leidos = cis.read(contenido)) > -1) {
+                fos.write(contenido, 0, leidos);
             }
+
             fis.close();
             exito = true;
         } catch (FileNotFoundException e) {
