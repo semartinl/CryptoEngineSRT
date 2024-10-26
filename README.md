@@ -1,4 +1,4 @@
-### PROYECTO DE CIFRADO Y DESCIFRADO, UTILIZANDO EL MODO DE PBE
+# PROYECTO DE CIFRADO Y DESCIFRADO, UTILIZANDO EL MODO DE PBE
  El proyecto consiste en cifrar y descifrar archivos utilizando el algoritmo de
  cifrado PBE (Password-Based Encryption) con el modo de operación CBC (Cipher Block
  Chaining).
