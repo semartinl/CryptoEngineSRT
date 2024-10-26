@@ -1,12 +1,15 @@
 package algoritmos;
 
 import javax.swing.*;
+
+import librerias.Options;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 
 public class EncryptionGUI extends JFrame {
-    private JTextField saltField;
+    // private JTextField saltField;
     private JPasswordField passwordField;
     private JPasswordField confirmPasswordField;
     private JSpinner iterationsSpinner;
@@ -33,16 +36,16 @@ public class EncryptionGUI extends JFrame {
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         // Configuración del algoritmo
-        String[] algorithms = {"PBEWithMD5AndDES", "PBEWithMD5AndTripleDES", "PBEWithSHA1AndDESede", "PBEWithSHA1AndRC2_40"};
+        String[] algorithms = Options.PBEAlgorithms;
         algorithmCombo = new JComboBox<>(algorithms);
         addComponent(mainPanel, new JLabel("Algoritmo:"), gbc, 0, 0);
         addComponent(mainPanel, algorithmCombo, gbc, 1, 0, 2, 1);
 
         // Campo para el SALT
-        saltField = new JTextField(20);
-        saltField.setEditable(false);
-        addComponent(mainPanel, new JLabel("Salt:"), gbc, 0, 1);
-        addComponent(mainPanel, saltField, gbc, 1, 1, 2, 1);
+        // saltField = new JTextField(20);
+        // saltField.setEditable(false);
+        // addComponent(mainPanel, new JLabel("Salt:"), gbc, 0, 1);
+        // addComponent(mainPanel, saltField, gbc, 1, 1, 2, 1);
 
         // Spinner para las iteraciones
         SpinnerNumberModel spinnerModel = new SpinnerNumberModel(1000, 1, 100000, 100);
@@ -197,11 +200,18 @@ public class EncryptionGUI extends JFrame {
         // Validar que las contraseñas coincidan
         String pass1 = new String(passwordField.getPassword());
         String pass2 = new String(confirmPasswordField.getPassword());
+        if(!Main.contrasenaSegura(pass1)){
+            JOptionPane.showMessageDialog(this,
+                    "La contraseña debe contener, al menos, 8 caracteres.",
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
         if (pass1.isEmpty() || !pass1.equals(pass2)) {
             JOptionPane.showMessageDialog(this,
                     "Las contraseñas no coinciden o están vacías.",
                     "Error", JOptionPane.ERROR_MESSAGE);
             return false;
+            
         }
 
         // Para descifrado, validar que el archivo de entrada sea .cif
