@@ -1,5 +1,5 @@
 /**
- * Actividad 2 - JPA
+ * Actividad 2 - JCA
  * Seguridad en Redes Telemáticas
  * Estudiantes:
  * Guillén Torrado, Sara
