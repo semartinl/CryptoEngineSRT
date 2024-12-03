@@ -8,6 +8,7 @@
 
 package actividad2;
 
+import Resumen_hash.FileProtector;
 import librerias.Options;
 
 import javax.swing.*;
@@ -19,17 +20,24 @@ import java.io.File;
  */
 public class GUI extends JFrame {
     //En esta sección, se guardarán las elecciones realizadas por el usuario dentro de la Interfaz Gráfica.
+
     private JPasswordField passwordField;
     private JPasswordField confirmPassword;
     private JSpinner iterations;
     private JComboBox<String> algorithmCombo;
+    private JComboBox<String> hashAlgorithmCombo;
+
+
     private JTextField sourceFile;
     private JTextField destFile;
     private JButton sourceButton;
     private JButton destButton;
     private JButton encryptButton;
     private JButton decryptButton;
+    private JButton hashButton; // Botón para proteger con hash
+    private JButton verifyHashButton; // Botón para verificar hash
     private boolean isEncrypting = true; // Para controlar el modo actual
+    private boolean isHashing = true; //Para controlar si se va a hacer hashing o no
 
     /**
      * Función que nos devuelve el path del fichero elegido. Es decir, el source file
@@ -56,6 +64,15 @@ public class GUI extends JFrame {
      */
     public String getAlgorithm() {
         return algorithmCombo.getSelectedItem().toString();
+    }
+
+    /**
+     * Devuelve el algoritmo elegido en el campo de "Algoritmo Hash".
+     *
+     * @return El algoritmo elegido
+     */
+    public String getHashAlgorithm() {
+        return hashAlgorithmCombo.getSelectedItem().toString();
     }
 
     /**
@@ -88,6 +105,12 @@ public class GUI extends JFrame {
         algorithmCombo = new JComboBox<>(Options.PBEAlgorithms); // Se establece las elecciones del tipo de algoritmos de cifrado que se pueden realizar. Esto se guarda en un campo de selección desplegable.
         addComponent(mainPanel, new JLabel("Algoritmo:"), gbc, 0, 0);     //Se añade una nueva fila a la ventana principal.
         addComponent(mainPanel, algorithmCombo, gbc, 1, 0, 2, 1);   //Se añade una nueva fila a la ventana principal, relacionada con el campo de elecciones de Algoritmo.
+
+
+        // Algoritmos Hash (nueva funcionalidad)
+        hashAlgorithmCombo = new JComboBox<>(Options.authenticationAlgorithms); // Opciones de hash
+        addComponent(mainPanel, new JLabel("Algoritmo de Hash:"), gbc, 0, 1);
+        addComponent(mainPanel, hashAlgorithmCombo, gbc, 1, 1, 2, 1);
 
         // Spinner para las iteraciones. Se establece un campo numérico, relacionado con el número de iteraciones del algoritmo.
         SpinnerNumberModel spinnerModel = new SpinnerNumberModel(1000, 1, 100000, 100);
@@ -130,8 +153,13 @@ public class GUI extends JFrame {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         encryptButton = new JButton("Cifrar");
         decryptButton = new JButton("Descifrar");
+        hashButton = new JButton("Proteger con Hash");
+        verifyHashButton = new JButton("Verificar Hash");
+
         buttonPanel.add(encryptButton);
         buttonPanel.add(decryptButton);
+        buttonPanel.add(hashButton);
+        buttonPanel.add(verifyHashButton);
 
         gbc.gridwidth = 3;
         gbc.gridy = 7;
@@ -244,6 +272,34 @@ public class GUI extends JFrame {
                 }
             }
         });
+        hashButton.addActionListener(e -> {
+            isHashing = true;
+            updateDestinationHashFile();
+            if (validateInputs()) {
+                try {
+                    //Se llama al método de cifrado, realizado por los estudiantes.
+                    FileProtector.processingAuthentication(getFileName(), getHashAlgorithm(), getPassword(),isHashing);
+                    JOptionPane.showMessageDialog(this, "Hashing completado");
+
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Ha ocurrido un error al calcular el hash.");
+                }
+            }
+        });
+        verifyHashButton.addActionListener(e ->{
+            isHashing = false;
+            updateDestinationHashFile();
+            if (validateInputs()) {
+                try {
+                    //Se llama al método de cifrado, realizado por los estudiantes.
+                    FileProtector.processingAuthentication(getFileName(), getHashAlgorithm(), getPassword(), isHashing);
+                    JOptionPane.showMessageDialog(this, "Cifrado completado");
+
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Se ha producido un error al intentar calcular el hash.");
+                }
+            }
+        });
     }
 
     /**
@@ -294,6 +350,43 @@ public class GUI extends JFrame {
     }
 
     /**
+     * Se actualiza el fichero destino, dependiendo de la extensión del fichero fuente
+     */
+    private void updateDestinationHashFile() {
+        String sourcePath = sourceFile.getText();
+        if (!sourcePath.isEmpty()) {
+            File sourceFile = new File(sourcePath);
+            String parentPath = sourceFile.getParent();
+            String fileName = sourceFile.getName();
+
+            // Añadir la extensión apropiada según la operación
+            String newFileName;
+            if (isHashing) {
+                newFileName = fileName + ".hsh";
+            } else {
+                if (fileName.toLowerCase().endsWith(".hsh")) {
+                    newFileName = fileName + ".cla";
+                } else {
+                    // Si no es un archivo .cif, mostramos un mensaje de error
+                    destFile.setText("");
+                    JOptionPane.showMessageDialog(this,
+                            "Para descifrar, el archivo de entrada debe tener extensión .cif",
+                            "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            }
+
+            // Construir la ruta completa del archivo de destino
+            String destPath = new File(parentPath, newFileName).getAbsolutePath();
+            destFile.setText(destPath);
+        } else {
+            destFile.setText("");
+        }
+    }
+
+
+
+    /**
      * Valida todos los campos de la ventana
      *
      * @return true si todos los campos son válidos, false en caso contrario
@@ -330,6 +423,13 @@ public class GUI extends JFrame {
         if (!isEncrypting && !sourceFile.getText().toLowerCase().endsWith(".cif")) {
             JOptionPane.showMessageDialog(this,
                     "Para descifrar, el archivo de entrada debe tener extensión .cif",
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        //A la hora de verificar un archivo hasheado, que la extensión del archivo sea .hsh
+        if (!isHashing && !sourceFile.getText().toLowerCase().endsWith(".hsh")) {
+            JOptionPane.showMessageDialog(this,
+                    "Para descifrar, el archivo de entrada debe tener extensión .hsh",
                     "Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
