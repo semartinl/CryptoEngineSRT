@@ -5,7 +5,7 @@ import java.security.PublicKey;
 
 public class Main {
 
-    public static void main(String[] args) {
+    /*public static void main(String[] args) {
         try {
             // Archivos de claves
             String publicKeyFile = "publicKey.key";
@@ -38,6 +38,11 @@ public class Main {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }*/
+    public static void main(String[] args) {
+        Practica4 practica = new Practica4();
+
+
     }
 
 }

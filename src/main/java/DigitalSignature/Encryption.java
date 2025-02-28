@@ -21,6 +21,8 @@ public class Encryption {
         Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
         cipher.init(Cipher.ENCRYPT_MODE, publicKey);
 
+
+
         try (FileInputStream fis = new FileInputStream(inputFile);
              FileOutputStream fos = new FileOutputStream(encryptedFile)) {
 

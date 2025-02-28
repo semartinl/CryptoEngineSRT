@@ -42,7 +42,8 @@ public class PBEActivity {
         SecretKey sKey = generateSessionKey(password, algoritmoCifrado);
 
         byte[] salt;
-        SecureRandom random = SecureRandom.getInstance("DEFAULT", "BC");
+        SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
+//        SecureRandom random = SecureRandom.getInstance("DEFAULT", "BC");
         salt = random.generateSeed(8);
 
         PBEParameterSpec pPS = new PBEParameterSpec(salt, numIteraciones);
