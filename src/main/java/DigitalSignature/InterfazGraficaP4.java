@@ -39,7 +39,7 @@ public class InterfazGraficaP4 {
                     keyPair = logicaGenerarClaves(scanner);
                     break;
                 case 2:
-                    System.out.println("Firmando archivo...");
+                    System.out.println("Cargando un par de claves desde un archivo...");
                     keyPair=logicaCargarClaves(scanner);
                     break;
                 case 3:
@@ -89,7 +89,7 @@ public class InterfazGraficaP4 {
      * Genera un par de claves (privada y pública) y las almacena en archivos.
      * @param scanner Objeto Scanner para la entrada del usuario.
      */
-    private static KeyPair logicaGenerarClaves(Scanner scanner) {
+    public static KeyPair logicaGenerarClaves(Scanner scanner) {
         try {
             System.out.println("Seleccione el tipo de clave (RSA o DSA): ");
             String keyType = scanner.nextLine().toUpperCase();
@@ -129,7 +129,7 @@ public class InterfazGraficaP4 {
         return null;
     }
 
-    private static KeyPair logicaCargarClaves(Scanner scanner) {
+    public static KeyPair logicaCargarClaves(Scanner scanner) {
         try{
             System.out.print("Escribe el nombre del fichero donde se guarda el par de claves a utilizar:");
 
@@ -149,7 +149,7 @@ public class InterfazGraficaP4 {
      * @param keyPair
      */
 
-    private static void logicaFirmarArchivo(Scanner scanner, KeyPair keyPair) {
+    public static void logicaFirmarArchivo(Scanner scanner, KeyPair keyPair) {
         try {
             System.out.println("Ingrese el nombre del archivo a firmar: ");
             String fileName = scanner.nextLine();
@@ -192,7 +192,7 @@ public class InterfazGraficaP4 {
      * Lógica para verificar la firma de un archivo. Se puede utilizar tanto claves RSA o DSA.
      * @param scanner Objeto Scanner para la entrada del usuario.
      */
-    private static void logicaVerificarFirmaArchivo(Scanner scanner, KeyPair keyPair) {
+    public static void logicaVerificarFirmaArchivo(Scanner scanner, KeyPair keyPair) {
         try {
 
             System.out.println("Ingrese el nombre del archivo de la firma: ");
@@ -227,7 +227,7 @@ public class InterfazGraficaP4 {
      * Cifra mediante algoritmos de clave pública un archivo utilizando una clave pública, pedida al usuario por consola.
      * @param scanner Objeto Scanner para la entrada del usuario.
      */
-    private static void logicaEncriptarFichero(Scanner scanner, KeyPair keyPair) {
+    public static void logicaEncriptarFichero(Scanner scanner, KeyPair keyPair) {
         try {
             System.out.println("Ingrese el nombre del archivo a cifrar: ");
             String fileName = scanner.nextLine();
@@ -264,7 +264,7 @@ public class InterfazGraficaP4 {
      * Descifra mediante algoritmos de clave pública un archivo utilizando una clave privada pedida al usuario por consola
      * @param scanner Objeto Scanner para la entrada del usuario.
      */
-    private static void logicaDescifrarArchivo(Scanner scanner, KeyPair keyPair) {
+    public static void logicaDescifrarArchivo(Scanner scanner, KeyPair keyPair) {
         try {
             System.out.println("Ingrese el nombre del archivo cifrado: ");
             String encryptedFile = scanner.nextLine();

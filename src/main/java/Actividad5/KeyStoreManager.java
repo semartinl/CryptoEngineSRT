@@ -1,6 +1,7 @@
 package Actividad5;
 
 
+import DigitalSignature.InterfazGraficaP4;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
@@ -19,6 +20,7 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.Scanner;
 
+import static DigitalSignature.InterfazGraficaP4.loadKeyPairFromFile;
 
 
 public class KeyStoreManager {
@@ -106,10 +108,20 @@ public class KeyStoreManager {
 //                .getCertificate(certBuilder.build(signer));
 //    }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         Security.addProvider(new BouncyCastleProvider());
         Scanner scanner = new Scanner(System.in);
         KeyPair loadedKeyPair = null;
+        //Se carga un par de claves en la variable "keyPair"
+        KeyPair keyPair;
+        String keyPairDefault = "C:\\Users\\celia\\eclipse-workspace-pbd\\cryptoEngineSRT\\claves.key";
+        keyPair = loadKeyPairFromFile(keyPairDefault);
+        if(keyPair == null) {
+            System.out.print("Escribe el nombre del fichero donde se guarda el par de claves a utilizar:");
+
+            String KeyPairPath = scanner.nextLine();
+            keyPair = loadKeyPairFromFile(KeyPairPath);
+        }
         try {
             System.out.print("Ingrese la ruta del almacén de claves: ");
             String path = scanner.nextLine();
@@ -123,12 +135,13 @@ public class KeyStoreManager {
                 System.out.println("\nAplicación de Criptografía");
                 System.out.println("1. Listar claves del KeyStore");
                 System.out.println("2. Agregar nueva clave al KeyStore");
-                System.out.println("3. Seleccionar clave del KeyStore");
-                System.out.println("4. Firmar archivo");
-                System.out.println("5. Verificar firma");
-                System.out.println("6. Cifrar archivo");
-                System.out.println("7. Descifrar archivo");
-                System.out.println("8. Salir");
+                System.out.println("3. Cargar par de claves del KeyStore");
+                System.out.println("4. Cargar par de claves desde un fichero");
+                System.out.println("5. Firmar archivo");
+                System.out.println("6. Verificar firma");
+                System.out.println("7. Cifrar archivo");
+                System.out.println("8. Descifrar archivo");
+                System.out.println("9. Salir");
                 System.out.print("Seleccione una opción: ");
 
                 int option = scanner.nextInt();
@@ -139,9 +152,10 @@ public class KeyStoreManager {
                         manager.listKeys();
                         break;
                     case 2:
+                        //TODO
                         System.out.print("Ingrese alias de la clave: ");
                         String alias = scanner.nextLine();
-                        KeyPair keyPair = generateKeyPair(scanner);
+                        keyPair = generateKeyPair(scanner);
 //                        manager.storeKeyPair(alias, keyPair, password);
                         System.out.println("Clave almacenada con éxito.");
                         break;
@@ -149,16 +163,36 @@ public class KeyStoreManager {
                         manager.listKeys();
                         System.out.print("Ingrese alias de la clave: ");
                         alias = scanner.nextLine();
-                        loadedKeyPair = manager.loadKeyPair(alias, password);
-                        if (loadedKeyPair != null) {
+                        keyPair = manager.loadKeyPair(alias, password);
+                        if (keyPair != null) {
                             System.out.println("Clave cargada con éxito.");
-                            System.out.println(loadedKeyPair.getPublic().getAlgorithm());
-                            System.out.println(loadedKeyPair.getPrivate().getAlgorithm());
+                            System.out.println(keyPair.getPublic().getAlgorithm());
+                            System.out.println(keyPair.getPrivate().getAlgorithm());
                         } else {
                             System.out.println("Clave no encontrada.");
                         }
                         break;
                     case 4:
+                        System.out.println("Cargando el par de claves desde un fichero ...");
+                        keyPair=InterfazGraficaP4.logicaCargarClaves(scanner);
+                        break;
+                    case 5:
+                        System.out.println("Firmando archivo...");
+                        InterfazGraficaP4.logicaFirmarArchivo(scanner, keyPair);
+                        break;
+                    case 6:
+                        System.out.println("Verificando firma...");
+                        InterfazGraficaP4.logicaVerificarFirmaArchivo(scanner, keyPair);
+                        break;
+                    case 7:
+                        System.out.println("Cifrando archivo...");
+                        InterfazGraficaP4.logicaEncriptarFichero(scanner, keyPair);
+                        break;
+                    case 8:
+                        System.out.println("Descifrando archivo...");
+                        InterfazGraficaP4.logicaDescifrarArchivo(scanner, keyPair);
+                        break;
+                    case 9:
                         System.out.println("Saliendo...");
                         scanner.close();
                         return;
