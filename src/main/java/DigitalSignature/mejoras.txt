@@ -1,7 +1,7 @@
 MEJORAS QUE SE HAN IMPLEMENTADO HASTA AHORA:
 1. Interfaz gráfica (preguntas por si lo quiere así)
 2. Generar claves tanto de RSA como DSA.
-3. Generar claves del tamaño que desea el usuario,512, 768 o 1024 bits (COMPROBAR QUE SE REALIZA)
+3. Generar claves del tamaño que desea el usuario,512, 768 o 1024 bits COMPLETADO
 4. Cifrar archivo
 5. Descifrar archivo
 6. Firma de un fichero
@@ -9,11 +9,11 @@ MEJORAS QUE SE HAN IMPLEMENTADO HASTA AHORA:
 
 COSAS QUE FALTA POR IMPLEMENTAR (obligatorias)
 
-3. Guardar las claves en ficheros cifrados.
+3. Guardar las claves en ficheros cifrados. COMPLETADO
 2. Documentar el código en formato Java.
 
 COSAS QUE FALTA POR IMPLEMENTAR (opcionales)
-1. Cargar por defecto un par de claves.
-2. Dar la posibilidad de cargar un par de claves, para no tener que estar pidiendo en cada proceso tanto la clave publica como privada.
+1. Cargar por defecto un par de claves. HECHO
+2. Dar la posibilidad de cargar un par de claves,  para no tener que estar pidiendo en cada proceso tanto la clave publica como privada. HECHO
 3. Guardar en un mismo fichero el par de claves en vez de ficheros diferentes
 4. Crear una clase para cargar y guardar el par de claves a utilizar

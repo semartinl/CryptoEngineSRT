@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.interfaces.RSAKey;
 
 public class Encryption {
 
@@ -24,11 +25,16 @@ public class Encryption {
             header.save(fileOutputStream);
             Cipher cipher = Cipher.getInstance(algoritmoCifAsimetrico);
             cipher.init(1, paramPublicKey);
+            // Cálculo del tamaño máximo que puede cifrar RSA (depende de la clave y el padding)
+            int keySizeBytes = ((RSAKey) paramPublicKey).getModulus().bitLength() / 8;
+            int blockSize = keySizeBytes - 11; // para PKCS1Padding
+            System.out.println("Tamaño de cifrado del algoritmo: " + cipher.getBlockSize());
+            System.out.println("Tamaño del cifrado por bloque (blocksize): " + blockSize);
             byte b1 = 53;
             byte b2 = 0;
             int j = 0;
             int k = fileInputStream.available();
-            byte[] arrayOfByte2 = new byte[b1];
+            byte[] arrayOfByte2 = new byte[blockSize];
             int i;
             while ((i = fileInputStream.read(arrayOfByte2)) != -1) {
                 byte[] arrayOfByte = cipher.doFinal(arrayOfByte2, 0, i);
@@ -59,6 +65,10 @@ public class Encryption {
             if (header.load(fileInputStream)) {
                 Cipher cipher = Cipher.getInstance(header.getAlgorithm1());
                 cipher.init(2, paramPrivateKey);
+                int keySizeBytes = ((RSAKey) paramPrivateKey).getModulus().bitLength() / 8;
+                int blockSize = keySizeBytes - 11; // para PKCS1Padding
+                System.out.println("Tamaño de cifrado del algoritmo: " + cipher.getBlockSize());
+                System.out.println("Tamaño del cifrado por bloque (blocksize): " + blockSize);
                 byte b1 = 64;
                 byte b2 = 0;
                 int j = 0;

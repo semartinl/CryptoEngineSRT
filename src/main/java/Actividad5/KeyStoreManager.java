@@ -120,11 +120,15 @@ public class KeyStoreManager {
             KeyStoreManager manager = new KeyStoreManager(path, password);
 
             while (true) {
-                System.out.println("\nOpciones:");
-                System.out.println("1. Listar claves");
-                System.out.println("2. Agregar clave");
-                System.out.println("3. Cargar clave");
-                System.out.println("4. Salir");
+                System.out.println("\nAplicación de Criptografía");
+                System.out.println("1. Listar claves del KeyStore");
+                System.out.println("2. Agregar nueva clave al KeyStore");
+                System.out.println("3. Seleccionar clave del KeyStore");
+                System.out.println("4. Firmar archivo");
+                System.out.println("5. Verificar firma");
+                System.out.println("6. Cifrar archivo");
+                System.out.println("7. Descifrar archivo");
+                System.out.println("8. Salir");
                 System.out.print("Seleccione una opción: ");
 
                 int option = scanner.nextInt();

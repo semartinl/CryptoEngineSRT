@@ -7,19 +7,27 @@ public class InterfazGraficaP4 {
     /**
      * Método principal que ejecuta la aplicación de criptografía en la consola.
      */
-    public static void LogicaPrincipal(String[] args) {
+    public static void LogicaPrincipal(String[] args) throws Exception {
         Scanner scanner = new Scanner(System.in);
-        System.out.print("Escribe el nombre del fichero donde se guarda el par de claves a utilizar:");
-        String KeyPairPath = scanner.nextLine();
         KeyPair keyPair;
+        String keyPairDefault = "C:\\Users\\USUARIO\\Desktop\\Sergio\\Universidad\\4ºcurso\\SRT\\Practicas\\CryptoEngine\\CryptoEngineSRT\\claves.key";
+        keyPair = loadKeyPairFromFile(keyPairDefault);
+        if(keyPair == null) {
+            System.out.print("Escribe el nombre del fichero donde se guarda el par de claves a utilizar:");
+
+            String KeyPairPath = scanner.nextLine();
+            keyPair = loadKeyPairFromFile(KeyPairPath);
+        }
+
         while (true) {
             System.out.println("Aplicación de Criptografía");
             System.out.println("1. Generar Claves");
-            System.out.println("2. Firmar Archivo");
-            System.out.println("3. Verificar Firma");
-            System.out.println("4. Cifrar Archivo");
-            System.out.println("5. Descifrar Archivo");
-            System.out.println("6. Salir");
+            System.out.println("2. Cargar Claves");
+            System.out.println("3. Firmar Archivo");
+            System.out.println("4. Verificar Firma");
+            System.out.println("5. Cifrar Archivo");
+            System.out.println("6. Descifrar Archivo");
+            System.out.println("7. Salir");
             System.out.print("Seleccione una opción: ");
 
             int option = scanner.nextInt();
@@ -32,21 +40,25 @@ public class InterfazGraficaP4 {
                     break;
                 case 2:
                     System.out.println("Firmando archivo...");
-                    logicaFirmarArchivo(scanner);
+                    keyPair=logicaCargarClaves(scanner);
                     break;
                 case 3:
-                    System.out.println("Verificando firma...");
-                    logicaVerificarFirmaArchivo(scanner);
+                    System.out.println("Firmando archivo...");
+                    logicaFirmarArchivo(scanner, keyPair);
                     break;
                 case 4:
-                    System.out.println("Cifrando archivo...");
-                    logicaEncriptarFichero(scanner);
+                    System.out.println("Verificando firma...");
+                    logicaVerificarFirmaArchivo(scanner, keyPair);
                     break;
                 case 5:
-                    System.out.println("Descifrando archivo...");
-                    logicaDescifrarArchivo(scanner);
+                    System.out.println("Cifrando archivo...");
+                    logicaEncriptarFichero(scanner, keyPair);
                     break;
                 case 6:
+                    System.out.println("Descifrando archivo...");
+                    logicaDescifrarArchivo(scanner, keyPair);
+                    break;
+                case 7:
                     System.out.println("Saliendo...");
                     scanner.close();
                     System.exit(0);
@@ -101,13 +113,14 @@ public class InterfazGraficaP4 {
             System.out.println("Ingrese el nombre del archivo para almacenar las claves: ");
             String fileName = scanner.nextLine();
 
-            try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(fileName + "_private.key"))) {
-                out.writeObject(keyPair.getPrivate());
-            }
-
-            try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(fileName + "_public.key"))) {
-                out.writeObject(keyPair.getPublic());
-            }
+//            try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(fileName + "_private.key"))) {
+//                out.writeObject(keyPair.getPrivate());
+//            }
+//
+//            try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(fileName + "_public.key"))) {
+//                out.writeObject(keyPair.getPublic());
+//            }
+            saveKeyPairToFile(keyPair,fileName+".key");
             System.out.println("Claves generadas y almacenadas correctamente.");
             return keyPair;
         } catch (Exception e) {
@@ -116,34 +129,54 @@ public class InterfazGraficaP4 {
         return null;
     }
 
+    private static KeyPair logicaCargarClaves(Scanner scanner) {
+        try{
+            System.out.print("Escribe el nombre del fichero donde se guarda el par de claves a utilizar:");
+
+            String KeyPairPath = scanner.nextLine();
+            return loadKeyPairFromFile(KeyPairPath);
+        }
+        catch (Exception e) {
+            System.out.println("Error al generar las claves: " + e.getMessage());
+        }
+        return null;
+    }
+
     /**
      * Lógica para firmar un archivo. Se puede utilizar tanto claves RSA o DSA.
+     *
      * @param scanner Objeto Scanner para la entrada del usuario.
+     * @param keyPair
      */
 
-    private static void logicaFirmarArchivo(Scanner scanner) {
+    private static void logicaFirmarArchivo(Scanner scanner, KeyPair keyPair) {
         try {
             System.out.println("Ingrese el nombre del archivo a firmar: ");
             String fileName = scanner.nextLine();
+            PrivateKey privateKey = keyPair.getPrivate();
+            if (keyPair == null) {
 
-            System.out.println("Ingrese el nombre del archivo de la clave privada: ");
-            String privateKeyFile = scanner.nextLine();
+                System.out.println("Ingrese el nombre del archivo de la clave privada: ");
+                String privateKeyFile = scanner.nextLine();
 
-            PrivateKey privateKey;
-            try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(privateKeyFile))) {
-                privateKey = (PrivateKey) in.readObject();
+
+                try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(privateKeyFile))) {
+                    privateKey = (PrivateKey) in.readObject();
+                }
             }
-            String signAlgorithm = "SHA1withRSA"; //Por defecto
-            if (privateKey.getAlgorithm().equals("RSA")) {
-                //MOSTRAR ALGORITMOS COMPATIBLES CON RSA y dar la elección al usuario
-                signAlgorithm = DigitalSignature.solicitarAlgoritmoCifradoClavePublica(scanner);
-            } else if (privateKey.getAlgorithm().equals("DSA")) {
-                //MOSTRAR ALGORITMOS COMPATIBLES CON DSA y dar la elección al usuario
-                System.out.println("El algoritmo DSA se encuentra valido.");
-                signAlgorithm = "SHA1withDSA";
 
-            }
-            System.out.println("El algoritmo a utilizar para la firma es: " + signAlgorithm);
+                String signAlgorithm = "SHA1withRSA"; //Por defecto
+                if (privateKey.getAlgorithm().equals("RSA")) {
+                    //MOSTRAR ALGORITMOS COMPATIBLES CON RSA y dar la elección al usuario
+                    signAlgorithm = DigitalSignature.solicitarAlgoritmoCifradoClavePublica(scanner);
+                } else if (privateKey.getAlgorithm().equals("DSA")) {
+                    //MOSTRAR ALGORITMOS COMPATIBLES CON DSA y dar la elección al usuario
+                    System.out.println("El algoritmo DSA se encuentra valido.");
+                    signAlgorithm = "SHA1withDSA";
+
+                }
+
+//            System.out.println("El algoritmo a utilizar para la firma es: " + signAlgorithm);
 
             System.out.println("Ingrese el nombre del archivo donde guardar la firma: ");
             String signatureFile = scanner.nextLine();
@@ -159,7 +192,7 @@ public class InterfazGraficaP4 {
      * Lógica para verificar la firma de un archivo. Se puede utilizar tanto claves RSA o DSA.
      * @param scanner Objeto Scanner para la entrada del usuario.
      */
-    private static void logicaVerificarFirmaArchivo(Scanner scanner) {
+    private static void logicaVerificarFirmaArchivo(Scanner scanner, KeyPair keyPair) {
         try {
 
             System.out.println("Ingrese el nombre del archivo de la firma: ");
@@ -167,15 +200,17 @@ public class InterfazGraficaP4 {
 
             System.out.println("Ingrese el nombre del archivo de salida: ");
             String outputFile = scanner.nextLine();
+            PublicKey publicKey = keyPair.getPublic();
 
+            if (keyPair == null) {
+                System.out.println("Ingrese el nombre del archivo de la clave pública: ");
+                String publicKeyFile = scanner.nextLine();
 
-            System.out.println("Ingrese el nombre del archivo de la clave pública: ");
-            String publicKeyFile = scanner.nextLine();
-
-            PublicKey publicKey;
-            try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(publicKeyFile))) {
-                publicKey = (PublicKey) in.readObject();
+                try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(publicKeyFile))) {
+                    publicKey = (PublicKey) in.readObject();
+                }
             }
+
 
             boolean verified = DigitalSignature.verificarFicheroFirmado(signatureFile,outputFile,publicKey);
 
@@ -192,18 +227,21 @@ public class InterfazGraficaP4 {
      * Cifra mediante algoritmos de clave pública un archivo utilizando una clave pública, pedida al usuario por consola.
      * @param scanner Objeto Scanner para la entrada del usuario.
      */
-    private static void logicaEncriptarFichero(Scanner scanner) {
+    private static void logicaEncriptarFichero(Scanner scanner, KeyPair keyPair) {
         try {
             System.out.println("Ingrese el nombre del archivo a cifrar: ");
             String fileName = scanner.nextLine();
+            PublicKey publicKey = keyPair.getPublic();
 
-            System.out.println("Ingrese el nombre del archivo de la clave pública: ");
-            String publicKeyFile = scanner.nextLine();
+            if(keyPair == null) {
+                System.out.println("Ingrese el nombre del archivo de la clave pública: ");
+                String publicKeyFile = scanner.nextLine();
 
-            PublicKey publicKey;
-            try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(publicKeyFile))) {
-                publicKey = (PublicKey) in.readObject();
+                try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(publicKeyFile))) {
+                    publicKey = (PublicKey) in.readObject();
+                }
             }
+
 
             if(publicKey.getAlgorithm().equals("RSA")) {
                 System.out.println("Ingrese el nombre del archivo cifrado de salida: ");
@@ -226,18 +264,21 @@ public class InterfazGraficaP4 {
      * Descifra mediante algoritmos de clave pública un archivo utilizando una clave privada pedida al usuario por consola
      * @param scanner Objeto Scanner para la entrada del usuario.
      */
-    private static void logicaDescifrarArchivo(Scanner scanner) {
+    private static void logicaDescifrarArchivo(Scanner scanner, KeyPair keyPair) {
         try {
             System.out.println("Ingrese el nombre del archivo cifrado: ");
             String encryptedFile = scanner.nextLine();
+            PrivateKey privateKey = keyPair.getPrivate();
 
-            System.out.println("Ingrese el nombre del archivo de la clave privada: ");
-            String privateKeyFile = scanner.nextLine();
+            if(keyPair == null) {
+                System.out.println("Ingrese el nombre del archivo de la clave privada: ");
+                String privateKeyFile = scanner.nextLine();
 
-            PrivateKey privateKey;
-            try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(privateKeyFile))) {
-                privateKey = (PrivateKey) in.readObject();
+                try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(privateKeyFile))) {
+                    privateKey = (PrivateKey) in.readObject();
+                }
             }
+
 
             if(privateKey.getAlgorithm().equals("RSA")) {
                 System.out.println("Ingrese el nombre del archivo descifrado de salida: ");
