@@ -1,0 +1,19 @@
+OBLIGATORIAS
+1. Cargar KeyStore especificado -> SI
+2. Mostrar información del KeyStore -> SI
+3. Cargar alguna KeyPair del KeyStore para utilizarla a posteriori
+4. Crear un nuevo KeyStore -> SI
+
+POR HACER
+1. Cargar keypair guardadas en el almacen
+2.
+IMPORTANTE: No hace falta que desde la aplicación se pueda crear un almacenar nuevas claves dentro del KeyStore -> OPCIONAL
+
+
+PASOS PARA CARGAR KEYPAIR
+1. Tener cargado un keystore (HECHO)
+2. Listar los datos del keystore para ver que clave se quiere recuperar (HECHO)
+2.1. Tener al menos una clave guardada en el keystore (Hecho con el almacen llamado "keystoreOficial" con contraseña "sergio". Tiene una clave con alias "sergio" y contraseña "sergio")
+3. Proveer la clave y la contraseña de la clave para poder recuperarla (HECHO)
+4. En caso de error, dar la oportunidad de repetirla o volver al inicio.
+5.

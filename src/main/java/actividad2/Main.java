@@ -40,12 +40,15 @@ public class Main {
     private static void procesarCifrado(Scanner scanner) {
         System.out.print("Ingrese la ruta del archivo a cifrar: ");
         String rutaArchivo = scanner.nextLine();
+
         String contrasena;
         do {
-            System.out.print("Ingrese la contraseña de cifrado: ");
+            System.out.print("Ingrese la contraseña para el cifrado: ");
             contrasena = scanner.nextLine();
             evaluarSeguridadContrasena(contrasena);
         } while (contrasena.length() < 8);
+
+        byte[] hashPasswd = calcularHash(contrasena);
 
         System.out.print("Número de iteraciones (ej. 1000): ");
         int iteraciones = scanner.nextInt();
@@ -54,7 +57,7 @@ public class Main {
         String algoritmo = CifradoOriginal.solicitarAlgoritmoCifrado();
 
         try {
-            PBEActivity.processingCipher(rutaArchivo, contrasena, algoritmo, iteraciones);
+            PBEActivity.processingCipher(rutaArchivo, contrasena, algoritmo, iteraciones, hashPasswd);
         } catch (Exception e) {
             System.out.println("Error al cifrar el archivo: " + e.getMessage());
         }
@@ -63,23 +66,32 @@ public class Main {
     private static void procesarDescifrado(Scanner scanner) {
         System.out.print("Ingrese la ruta del archivo a descifrar: ");
         String rutaArchivo = scanner.nextLine();
+
         String contrasena;
         do {
             System.out.print("Ingrese la contraseña de descifrado: ");
             contrasena = scanner.nextLine();
             evaluarSeguridadContrasena(contrasena);
+
         } while (contrasena.length() < 8);
+
+        byte[] hashIngresado = calcularHash(contrasena);
 
         System.out.print("Número de iteraciones (ej. 1000): ");
         int iteraciones = scanner.nextInt();
         scanner.nextLine();
 
         try {
-            PBEActivity.processingDecipher(rutaArchivo, contrasena, iteraciones);
+            if (PBEActivity.verifyPasswordHash(rutaArchivo, hashIngresado)) {
+                PBEActivity.processingDecipher(rutaArchivo, contrasena, iteraciones);
+            } else {
+                System.out.println("Error: La contraseña ingresada no coincide con la original.");
+            }
         } catch (Exception e) {
             System.out.println("Error al descifrar el archivo: " + e.getMessage());
         }
     }
+
 
     private static void evaluarSeguridadContrasena(String contrasena) {
         if (contrasena.length() < 8) {
@@ -95,7 +107,8 @@ public class Main {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(contrasena.getBytes(StandardCharsets.UTF_8));
-            return Arrays.copyOf(hash, 2); // Usamos solo los primeros 2 bytes
+            System.out.println("Hash calculado antes:" + Arrays.toString(hash));
+            return Arrays.copyOf(hash, 8); // Usamos solo los primeros 8 bytes
         } catch (Exception e) {
             throw new RuntimeException("Error al calcular hash de la contraseña", e);
         }

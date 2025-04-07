@@ -244,7 +244,7 @@ public class GUI extends JFrame {
             if (validateInputs()) {
                 try {
                     //Se llama al método de cifrado, realizado por los estudiantes.
-                    PBEActivity.processingCipher(getFileName(), getPassword(), getAlgorithm(), getIterations());
+//                    PBEActivity.processingCipher(getFileName(), getPassword(), getAlgorithm(), getIterations());
                     JOptionPane.showMessageDialog(this, "Cifrado completado");
 
                 } catch (Exception ex) {

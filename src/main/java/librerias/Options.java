@@ -99,7 +99,7 @@ public class Options implements Serializable {
 	 */
 	public final static String authenticationAlgorithms[] = { "none", "MD2", "MD5", "SHA-1", "SHA-256", "SHA-384",
 			"SHA-512", "HmacMD5", "HmacSHA1", "HmacSHA256", "HmacSHA384", "HmacSHA512", "SHA1withRSA", "MD2withRSA",
-			"MD5withRSA", "SHA224withRSA", "SHA256withRSA", "SHA384withRSA","SHA512withRSA" };
+			"MD5withRSA", "SHA224withRSA", "SHA256withRSA", "SHA384withRSA","SHA512withRSA", "SHA1withDSA" };
 	
 	/**
      * Constructor que obtiene una instancia de <code>Options</code>

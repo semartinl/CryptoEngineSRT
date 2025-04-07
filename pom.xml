@@ -7,6 +7,18 @@
     <groupId>incubadora</groupId>
     <artifactId>cryptoEngineSRT</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <dependencies>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
 
+        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.bouncycastle</groupId>-->
+<!--            <artifactId>bcpkix-jdk18on-1.78.1</artifactId>-->
+
+<!--        </dependency>-->
+
+    </dependencies>
 
 </project>

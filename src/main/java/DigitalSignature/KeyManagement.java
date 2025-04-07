@@ -27,6 +27,7 @@ public class KeyManagement {
         kpg.initialize(2048); // Tamaño de clave
         KeyPair keyPair = kpg.generateKeyPair();
 
+
         // Guardar clave pública
         try (ObjectOutputStream publicKeyOS = new ObjectOutputStream(new FileOutputStream(publicKeyFile))) {
             publicKeyOS.writeObject(keyPair.getPublic());

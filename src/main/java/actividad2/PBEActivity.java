@@ -19,6 +19,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.SecureRandom;
+import java.util.Arrays;
 
 /**
  * Clase para cifrar y descifrar ficheros
@@ -33,7 +34,7 @@ public class PBEActivity {
      * @param numIteraciones   El número de iteraciones
      * @throws Exception
      */
-    public static void processingCipher(String filename, String password, String algoritmoCifrado, int numIteraciones) throws Exception {
+    public static void processingCipher(String filename, String password, String algoritmoCifrado, int numIteraciones, byte[] hashPassword) throws Exception {
 
         Options confAlgoritmo = new Options();
         confAlgoritmo.setCipherAlgorithm(algoritmoCifrado);
@@ -51,7 +52,7 @@ public class PBEActivity {
         c.init(Cipher.ENCRYPT_MODE, sKey, pPS);
 
         Header h = new Header(Options.OP_SYMMETRIC_CIPHER, algoritmoCifrado,
-                Options.authenticationAlgorithms[0], salt);
+                Options.authenticationAlgorithms[0],salt, hashPassword);
 
         if (!writeCipheredText(c, filename, h)) {
             System.out.println("Error al cifrar el fichero");
@@ -59,6 +60,35 @@ public class PBEActivity {
             System.out.println("El fichero se cifrado correctamente");
         }
 
+    }
+
+    public static boolean verifyPasswordHash(String ruta_archivo, byte[] hashPassword) throws Exception {
+        Header h = new Header();
+        FileInputStream fis = new FileInputStream(ruta_archivo);
+
+        boolean equal = false;
+        if (h.load(fis)) {
+//            String algoritmoCifrado = h.getAlgorithm1();
+//            byte[] salt = h.getData();
+//
+//            Options confAlgoritmo = new Options();
+//            confAlgoritmo.setCipherAlgorithm(algoritmoCifrado);
+//            Cipher c = Cipher.getInstance(algoritmoCifrado);
+//
+//            SecretKey sKey = generateSessionKey(password, algoritmoCifrado);
+//            PBEParameterSpec pPS = new PBEParameterSpec(salt, numIteraciones);
+//
+//            c.init(Cipher.DECRYPT_MODE, sKey, pPS);
+            String algoritmoCifrado = h.getAlgorithm1();
+            System.out.println(algoritmoCifrado);
+
+            System.out.println("Hash guardado en la cabecera: " + Arrays.toString(h.getHashPassword()));
+            System.out.println("Hash calculado: " + Arrays.toString(hashPassword));
+            if(Arrays.equals(h.getHashPassword(), hashPassword)) {
+                equal = true;
+            }
+        }
+        return equal;
     }
 
     /**
@@ -110,10 +140,11 @@ public class PBEActivity {
         CipherOutputStream cos = new CipherOutputStream(fos, c); // Abre el flujo de outFile cifrado
 
         boolean success = false;
+
         if (!h.save(fos)) {
             System.out.println("Error al guardar la cabecera");
         }
-
+        System.out.println("Llega despues de escribir el fichero");
         try {
             FileInputStream fis = new FileInputStream(filename);
             byte[] buffer = new byte[1024];

@@ -6,7 +6,16 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="lib" path="C:/Users/celia/OneDrive - Universidad de Extremadura/Escritorio/Sergio/Uni/4º-curso/1º-cuatri/SRT/Prácticas-laboratorios/Practicas-cripto-Java/Bouncy Castle/bcc_lastversion/bcprov-jdk18on-176.jar"/>
+	<classpathentry kind="lib" path="C:/Users/celia/OneDrive - Universidad de Extremadura/Escritorio/Sergio/Uni/4º-curso/1º-cuatri/SRT/Prácticas-laboratorios/Practicas-cripto-Java/Bouncy Castle/bcc_lastversion/bcprov-jdk18on-176.jar">
+    		<attributes>
+    			<attribute name="module" value="true"/>
+    		</attributes>
+    	</classpathentry>
+    	<classpathentry kind="lib" path="C:/Users/celia/OneDrive - Universidad de Extremadura/Escritorio/Sergio/Uni/4º-curso/1º-cuatri/SRT/bcpkix-jdk18on-1.78.1.jar">
+    		<attributes>
+    			<attribute name="module" value="true"/>
+    		</attributes>
+    	</classpathentry>
 	<classpathentry excluding="src/" kind="src" path=""/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -1,13 +1,10 @@
 package DigitalSignature;
 
-import java.security.PrivateKey;
-import java.security.PublicKey;
-
 public class Main {
 
-    /*public static void main(String[] args) {
+    public static void main(String[] args) {
         try {
-            // Archivos de claves
+            /*// Archivos de claves
             String publicKeyFile = "publicKey.key";
             String privateKeyFile = "privateKey.key";
 
@@ -34,15 +31,14 @@ public class Main {
             Encryption.encryptFile(inputFile, encryptedFile, publicKey);
             Encryption.decryptFile(encryptedFile, decryptedFile, privateKey);
             System.out.println("Archivo desencriptado con éxito.");
+            */
+            InterfazGraficaP4.LogicaPrincipal(args);
+
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }*/
-    public static void main(String[] args) {
-        Practica4 practica = new Practica4();
-
-
     }
+
 
 }

@@ -34,6 +34,9 @@ public class Header extends BasicHeader {
    */
   private byte data[];
 
+  private byte hashPassword[];
+
+
   /**
    * Constructor por defecto.    
    */
@@ -41,7 +44,8 @@ public class Header extends BasicHeader {
     algorithm1 = Options.cipherAlgorithms[0];
     algorithm2 = Options.authenticationAlgorithms[0];
     operation  = Options.OP_NONE;
-    data = new byte[] { 0x7d, 0x60, 0x43, 0x5f, 0x02, 0x09, 0x0f, 0x0a};	
+    data = new byte[] { 0x7d, 0x60, 0x43, 0x5f, 0x02, 0x09, 0x0f, 0x0a};
+	hashPassword = new byte[] { 0x7d, 0x60, 0x43, 0x5f, 0x02, 0x09, 0x0f, 0x0a};
   }
   /**
    * Constructor. Inicia los atributos con valores suministrados.
@@ -54,7 +58,16 @@ public class Header extends BasicHeader {
 	 this.algorithm1 = algorithm1;
      this.algorithm2 = algorithm2;
      this.data = data;
+	 this.hashPassword = new byte[] { 0x7d, 0x60, 0x43, 0x5f, 0x02, 0x09, 0x0f, 0x0a};
   }
+
+	public Header(byte operation,String algorithm1, String algorithm2,  byte[] data, byte[] hashPassword) {
+		this.operation  = operation;
+		this.algorithm1 = algorithm1;
+		this.algorithm2 = algorithm2;
+		this.data = data;
+		this.hashPassword = hashPassword;
+	}
 
   public byte getOperation(){
 	    return operation;
@@ -71,10 +84,12 @@ public class Header extends BasicHeader {
   public byte[] getData(){
 	    return data;
   }
+  public byte[] getHashPassword(){ return hashPassword; }
   
   public void setData(byte[]newData) {
 	    data = newData;
   }
+  public void setHashPassword(byte[]newHashPassword) { hashPassword = newHashPassword; }
   
   /**
    * Intenta cargar los datos de una cabecera desde un InputStream ya abierto.   
@@ -85,18 +100,63 @@ public class Header extends BasicHeader {
    */
   public boolean load(InputStream is) throws Exception {
 	  boolean breturn=false;
+
 	  if(super.load(is)) {
+
 		  byte[] buffer = getbasicData();
+
 		  if(buffer.length>=MINHEADERLENGTH) {
+			  System.out.println("Se mete dentro del if del length buffer");
 			  if (Arrays.equals(MARK,Arrays.copyOf(buffer,MARKLENGTH))) {
+				  System.out.println("Se mete dentro del if de la copia del buffer");
+
 				  short i = MARKLENGTH;
+				  System.out.println("Inicialización de la bandera i: " + i);
 				  operation  = buffer[i++];
+				  System.out.println("Operation: " + operation);
 		          algorithm1 = Options.cipherAlgorithms[buffer[i++]];
+				  System.out.println("Algorithm1: " + algorithm1);
+				  System.out.println("Antes del error: " + Arrays.toString(buffer));
+				  System.out.println("Lo que hay en la ubicación " + i +" del buffer : " + buffer[i]);
 		          algorithm2 = Options.authenticationAlgorithms[buffer[i++]];
-		          int dataLength = (buffer[i]>=0) ? buffer[i] : (buffer[i]+256);
+				  System.out.println("Algorithm2: " + algorithm2);
+				  System.out.println("Inicialización de la bandera i: " + i);
+		          /*int dataLength = (buffer[i]>=0) ? buffer[i] : (buffer[i]+256);
 		          i++;
-		          data = Arrays.copyOfRange(buffer,i,i+dataLength);				  
+		          data = Arrays.copyOfRange(buffer,i,i+dataLength);
+				  i+= (short) dataLength;
+				  int hashPasswordLength = (buffer[i]>=0) ? buffer[i] : (buffer[i]+256);
+				  i++;
+				  hashPassword = Arrays.copyOfRange(buffer,i,i+hashPasswordLength);*/
+				  if (i < buffer.length) {
+
+					  int dataLength = (buffer[i] >= 0) ? buffer[i] : (buffer[i] + 256);
+					  i++;
+
+					  if (i + dataLength <= buffer.length) {
+						  data = Arrays.copyOfRange(buffer, i, i + dataLength);
+						  i += (short) dataLength;
+					  } else {
+						  throw new Exception("Datos corruptos: dataLength fuera de rango.");
+					  }
+				  } else {
+					  throw new Exception("Datos corruptos: índice fuera de rango antes de leer dataLength.");
+				  }
+
+				  if (i < buffer.length) {
+					  int hashPasswordLength = (buffer[i] >= 0) ? buffer[i] : (buffer[i] + 256);
+					  i++;
+
+					  if (i + hashPasswordLength <= buffer.length) {
+						  hashPassword = Arrays.copyOfRange(buffer, i, i + hashPasswordLength);
+					  } else {
+						  throw new Exception("Datos corruptos: hashPasswordLength fuera de rango.");
+					  }
+				  } else {
+					  throw new Exception("Datos corruptos: índice fuera de rango antes de leer hashPasswordLength.");
+				  }
 				  breturn = true;
+
 			  }
 		  }
 	  }
@@ -111,7 +171,7 @@ public class Header extends BasicHeader {
    */
   public boolean save(OutputStream os) throws Exception {
 	  boolean breturn=false;
-	  byte[] buffer = new byte[MINHEADERLENGTH+data.length];
+	  byte[] buffer = new byte[MINHEADERLENGTH+data.length+hashPassword.length+1];
 	  short i;
 		
 	  for(i=0; i<MARKLENGTH; i++)
@@ -122,7 +182,11 @@ public class Header extends BasicHeader {
 	  buffer[i++] = (byte)data.length;
 	  for(short j=0; j<data.length; j++)
 		  buffer[i++] = data[j];
-	  
+
+	  buffer[i++] = (byte)hashPassword.length;
+	  for(short j=0; j<hashPassword.length; j++)
+		  buffer[i++] = hashPassword[j];
+
 	  setbasicData(buffer);
 	  breturn = super.save(os);
 	  return breturn;

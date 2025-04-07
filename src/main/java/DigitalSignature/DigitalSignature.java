@@ -1,10 +1,17 @@
 package DigitalSignature;
 
+import librerias.Header;
+import librerias.Options;
+
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
+import java.util.Arrays;
+import java.util.Scanner;
+
+import static actividad2.CifradoOriginal.leerIntegerTeclado;
 
 public class DigitalSignature {
     /**
@@ -64,6 +71,118 @@ public class DigitalSignature {
 
         return signature.verify(sigBytes);
     }
+    public static final void firmarFicheroClavePrivada(String inputFile, String outputFile, PrivateKey paramPrivateKey, String algoritmoClavePrivada) {
+        try {
+            FileInputStream fileInputStream = new FileInputStream(inputFile);
+            int j = 0;
+            int k = fileInputStream.available();
+            Signature signature = Signature.getInstance(algoritmoClavePrivada);
+            signature.initSign(paramPrivateKey);
+            byte[] buffer = new byte[1024];
+            int i;
+            while ((i = fileInputStream.read(buffer)) > -1) {
+                j += i;
+                signature.update(buffer, 0, i);
+            }
+
+            byte[] firma = signature.sign();
+
+            FileOutputStream fileOutputStream = new FileOutputStream(outputFile);
+            fileInputStream.close();
+
+            FileInputStream newFileInputStream = new FileInputStream(inputFile);
+            Header headerCifradoMAC = new Header(Options.OP_SIGNED, "none", algoritmoClavePrivada, firma);
+            headerCifradoMAC.save(fileOutputStream);
+
+            while ((i = newFileInputStream.read(buffer)) != -1)
+                fileOutputStream.write(buffer, 0, i);
+            fileOutputStream.close();
+            newFileInputStream.close();
+        } catch (Exception exception) {
+            System.err.println(exception);
+        }
+    }
+
+    /**
+     * Realiza el proceso de verificacion de firma con la clave publica, creando un nuevo fichero
+     * @param pathEntrada Fichero a verificar la firma
+     * @param pathSalida Fichreo de salida con la firma verificada
+     * @param paramPublicKey Clave publica utilizada para la verificacion de la firma
+     * @return
+     */
+    public static final boolean verificarFicheroFirmado(String pathEntrada, String pathSalida, PublicKey paramPublicKey) {
+        boolean bool = false;
+        try {
+            FileOutputStream fileOutputStream = new FileOutputStream(pathSalida);
+            FileInputStream fileInputStream = new FileInputStream(pathEntrada);
+            Header cabecera = new Header();
+            System.out.println("Llega hasta la creación de la cabecera y antes del if de carga de la cabecera");
+            if (cabecera.load(fileInputStream)) {
+                System.out.println("Se carga la cabecera: " + Arrays.toString(cabecera.getData()));
+                if(cabecera.getOperation() == Options.OP_SIGNED) {
+                    System.out.println("La operación de la cabecera es de firma");
+                    int j = 0;
+                    int k = fileInputStream.available();
+
+                    Signature signature = Signature.getInstance(cabecera.getAlgorithm2());
+
+                    signature.initVerify(paramPublicKey);
+                    byte[] buffer = new byte[1024];
+                    int i;
+                    while ((i = fileInputStream.read(buffer)) > -1) {
+                        j += i;
+                        signature.update(buffer, 0, i);
+                        fileOutputStream.write(buffer, 0, i);
+                    }
+
+                    if (signature.verify(cabecera.getData())) {
+
+                        bool = true;
+                    } else {
+
+                        bool = false;
+                    }
+                    fileOutputStream.close();
+                    fileInputStream.close();
+                }
+                else {
+                    System.out.println("\nArchivo no utilizado para firmas.\n");
+                }
+
+            }
+        } catch (Exception exception) {
+            System.err.println(exception);
+        }
+        return bool;
+    }
+
+    /**
+     * Muestra las distintas opciones de algoritmos de cifrado y devuelve el elegido
+     * @return String Algoritmo de cifrado elegido
+     */
+    public static String solicitarAlgoritmoCifradoClavePublica(Scanner scanner) {
+        int alCifrado = -1;
+        while (alCifrado < 0 || alCifrado >= Options.signAlgorithms.length) {
+            for (int i = 0; i < Options.signAlgorithms.length; i++) {
+                System.out.println("[" + i + "]" + Options.signAlgorithms[i]);
+            }
+            alCifrado = leerIntegerTeclado("Elige un algoritmo de cifrado: ");
+        }
+        return Options.signAlgorithms[alCifrado];
+    }
+
+    /**
+     * Funcion que nos permite cambiar o añadir una nueva extensión, si el fichero no la tiene.
+     *
+     * @param pathFichero Fichero que se va a cambiar o añadir una extension
+     * @param extension Una extension del fichero que se quiere crear
+     * @return La direccion del fichero con la nueva extensión
+     */
+    public static final String cambioExtensionFichero(String pathFichero, String extension) {
+        int i;
+        return ((i = pathFichero.lastIndexOf(".")) == -1) ? (String.valueOf(pathFichero) + "." + extension) : (String.valueOf(pathFichero.substring(0, i)) + "." + extension);
+    }
+
     /**
      * Elimina la última extensión de un archivo en una ruta, si esta existe.
      *

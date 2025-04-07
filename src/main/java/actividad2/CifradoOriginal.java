@@ -127,7 +127,7 @@ public class CifradoOriginal {
      * @param prompt Mensaje que se muestra al usuario
      * @return int Número introducido por el usuario
      */
-    static int leerIntegerTeclado(String prompt) {
+    public static int leerIntegerTeclado(String prompt) {
         try {
             StringBuffer buffer = new StringBuffer();
             System.out.print(prompt);
