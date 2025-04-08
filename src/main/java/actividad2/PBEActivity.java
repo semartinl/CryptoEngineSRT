@@ -62,6 +62,7 @@ public class PBEActivity {
 
     }
 
+
     public static boolean verifyPasswordHash(String ruta_archivo, byte[] hashPassword) throws Exception {
         Header h = new Header();
         FileInputStream fis = new FileInputStream(ruta_archivo);

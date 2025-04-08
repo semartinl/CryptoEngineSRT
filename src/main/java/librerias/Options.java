@@ -78,6 +78,10 @@ public class Options implements Serializable {
 	 * Nombres estandares de algoritmos de cifrado publico
 	 */
 	public final static String publicAlgorithms[] = {"none", "RSA/ECB/PKCS1Padding" };
+
+	public static final String[] hashAlgorithms = new String[] { "MD2", "MD5", "SHA-1", "SHA-256", "SHA-384", "SHA-512" };
+
+	public static final String[] macAlgorithms = new String[] { "HmacMD5", "HmacSHA1", "HmacSHA256", "HmacSHA384", "HmacSHA512" };
 	/**
 	 * Nombres estandares de algoritmos de autenticacion hash y MAC
 	 */

@@ -22,6 +22,7 @@ import java.security.SecureRandom;
 
 
 public class CifradoOriginal {
+    public int num_bytes = 1024;
     /**
      * Devuelve true si se va a cifrar, false si se va a descifrar
      * @return boolean true si se va a cifrar, false si se va a descifrar

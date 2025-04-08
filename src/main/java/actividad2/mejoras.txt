@@ -3,7 +3,7 @@ ESTAS SON LAS MEJORAS QUE SE HAN REALIZADO HASTA EL MOMENTO:
 1. Interfaz en modo gráfico (aunque le tengo que preguntar si es esto lo que quiere)
 2. Contraseñas seguras (aunque es mejor cambiarla por el método y librería que nos pide, ya que pide mediante una escala)
 3. Se asegura que la contraseña realizada al cifrar es la misma que se pone al descifrar.
-4.
+4. Generación de un salt ALEATORIO, tal como pide en la ampliación.
 
 LO QUE FALTA
 1. Documentar el código

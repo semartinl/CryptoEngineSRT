@@ -21,6 +21,7 @@ import java.util.Enumeration;
 import java.util.Scanner;
 
 import static DigitalSignature.InterfazGraficaP4.loadKeyPairFromFile;
+import static DigitalSignature.InterfazGraficaP4.mostrarSubmenuAsimetrico;
 
 
 public class KeyStoreManager {
@@ -114,7 +115,7 @@ public class KeyStoreManager {
         KeyPair loadedKeyPair = null;
         //Se carga un par de claves en la variable "keyPair"
         KeyPair keyPair;
-        String keyPairDefault = "C:\\Users\\celia\\eclipse-workspace-pbd\\cryptoEngineSRT\\claves.key";
+        String keyPairDefault = "C:\\Users\\USUARIO\\Desktop\\Sergio\\Universidad\\4ºcurso\\SRT\\Practicas\\CryptoEngine\\CryptoEngineSRT\\claves.key";
         keyPair = loadKeyPairFromFile(keyPairDefault);
         if(keyPair == null) {
             System.out.print("Escribe el nombre del fichero donde se guarda el par de claves a utilizar:");
@@ -134,14 +135,15 @@ public class KeyStoreManager {
             while (true) {
                 System.out.println("\nAplicación de Criptografía");
                 System.out.println("1. Listar claves del KeyStore");
-                System.out.println("2. Agregar nueva clave al KeyStore");
+                System.out.println("2. Agregar nueva clave al KeyStore (no esta desarrollado)");
                 System.out.println("3. Cargar par de claves del KeyStore");
                 System.out.println("4. Cargar par de claves desde un fichero");
                 System.out.println("5. Firmar archivo");
                 System.out.println("6. Verificar firma");
-                System.out.println("7. Cifrar archivo");
-                System.out.println("8. Descifrar archivo");
-                System.out.println("9. Salir");
+                System.out.println("7. Cifrar archivo con par de claves");
+                System.out.println("8. Descifrar archivo con un par de claves");
+                System.out.println("9. Mostrar MENU DE OPCIONES ASIMETRICAS");
+                System.out.println("10. Salir");
                 System.out.print("Seleccione una opción: ");
 
                 int option = scanner.nextInt();
@@ -193,6 +195,9 @@ public class KeyStoreManager {
                         InterfazGraficaP4.logicaDescifrarArchivo(scanner, keyPair);
                         break;
                     case 9:
+                        mostrarSubmenuAsimetrico(scanner);
+                        break;
+                    case 10:
                         System.out.println("Saliendo...");
                         scanner.close();
                         return;

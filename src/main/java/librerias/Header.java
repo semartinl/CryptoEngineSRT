@@ -5,6 +5,7 @@ package librerias;
 * @version 1.0, 2022
 */
 import java.io.*;
+import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.ArrayList;
 
@@ -44,7 +45,10 @@ public class Header extends BasicHeader {
     algorithm1 = Options.cipherAlgorithms[0];
     algorithm2 = Options.authenticationAlgorithms[0];
     operation  = Options.OP_NONE;
-    data = new byte[] { 0x7d, 0x60, 0x43, 0x5f, 0x02, 0x09, 0x0f, 0x0a};
+	  data = new byte[8];
+	  SecureRandom random = new SecureRandom();
+	  random.nextBytes(data);
+//    data = new byte[] { 0x7d, 0x60, 0x43, 0x5f, 0x02, 0x09, 0x0f, 0x0a};
 	hashPassword = new byte[] { 0x7d, 0x60, 0x43, 0x5f, 0x02, 0x09, 0x0f, 0x0a};
   }
   /**

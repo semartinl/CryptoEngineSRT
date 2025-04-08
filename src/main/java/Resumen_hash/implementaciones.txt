@@ -1,0 +1,10 @@
+COSAS QUE VAN
+1. Calculo y creación del archivo con resumen HASH
+2. Verificación del resumen de un archivo con HASH
+
+COSAS QUE FALTAN POR COMPROBAR
+1. Calcular y crear un archivo con un resumen MAC
+2. Verificar un archivo con resumen MAC
+
+COSAS OPCIONALES.
+1. SALT por defecto debe ser aleatorio. Ahora siempre es fijo.

@@ -3,6 +3,10 @@ package DigitalSignature;
 import java.util.Scanner;
 import java.security.*;
 import java.io.*;
+
+import static Resumen_hash.Main.*;
+import static actividad2.Main.*;
+
 public class InterfazGraficaP4 {
     /**
      * Método principal que ejecuta la aplicación de criptografía en la consola.
@@ -25,9 +29,10 @@ public class InterfazGraficaP4 {
             System.out.println("2. Cargar Claves");
             System.out.println("3. Firmar Archivo");
             System.out.println("4. Verificar Firma");
-            System.out.println("5. Cifrar Archivo");
-            System.out.println("6. Descifrar Archivo");
-            System.out.println("7. Salir");
+            System.out.println("5. Cifrar Archivo con par de claves");
+            System.out.println("6. Descifrar Archivo con un par de claves");
+            System.out.println("7. Mostrar MENU DE OPCIONES ASIMETRICAS");
+            System.out.println("8. Salir");
             System.out.print("Seleccione una opción: ");
 
             int option = scanner.nextInt();
@@ -59,9 +64,12 @@ public class InterfazGraficaP4 {
                     logicaDescifrarArchivo(scanner, keyPair);
                     break;
                 case 7:
+                    mostrarSubmenuAsimetrico(scanner);
+                    break;
+                case 8:
                     System.out.println("Saliendo...");
                     scanner.close();
-                    System.exit(0);
+                    return;
                 default:
                     System.out.println("Opción no válida. Intente nuevamente.");
             }
@@ -296,4 +304,44 @@ public class InterfazGraficaP4 {
             System.out.println("Error al descifrar el archivo: " + e.getMessage());
         }
     }
+
+    public static void mostrarSubmenuAsimetrico(Scanner scanner) {
+        System.out.println("\n🧩 Submenú de Integridad");
+        System.out.println("Seleccione una opción:");
+        System.out.println("1. Cifrar un archivo");
+        System.out.println("2. Descifrar un archivo");
+        System.out.println("3. Calcular HASH");
+        System.out.println("4. Calcular MAC");
+        System.out.println("5. Verificar HASH");
+        System.out.println("6. Verificar MAC");
+        int subop = scanner.nextInt();
+        scanner.nextLine();
+
+        switch (subop) {
+            case 1:
+                procesarCifrado(scanner);
+                break;
+            case 2:
+                procesarDescifrado(scanner);
+                break;
+            case 3:
+                logicaCalcularHash(scanner);
+                break;
+            case 4:
+                logicaCalcularMAC(scanner);
+                break;
+            case 5:
+                verificarHash(scanner);
+                break;
+            case 6:
+                verificarMAC(scanner);
+                break;
+
+            default:
+                System.out.println("Opción inválida.");
+        }
+    }
+
+
+
 }

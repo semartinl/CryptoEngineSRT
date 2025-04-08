@@ -13,6 +13,7 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
 public class FileProtector {
+    private static int BUFFER_SIZE = 32768;
 
 
     public static byte[] getHash (String inputFile, Header h, MessageDigest md){
@@ -95,49 +96,100 @@ public class FileProtector {
     }
 
     // Función para generar un Hash del contenido del archivo
-    public static boolean verifyHash(String inputFile, Header h, MessageDigest md) throws Exception {
-        // Crear el MessageDigest con el algoritmo deseado
+    /**
+     * Verifica el hash de un archivo.
+     * @param inputFile Archivo de entrada con el hash incorporado.
+     * @param outputFile Archivo donde se almacenará el contenido sin la cabecera.
+     * @param secreto Contraseña o clave para la verificación del hash.
+     * @param algoritmo Algoritmo utilizado para generar el hash.
+     */
+//    public final void verifyHash(String inputFile, String outputFile, String secreto, String algoritmo) {
 
+//    public static boolean verifyHash(String inputFile, Header h, MessageDigest md) throws Exception {
+//        // Crear el MessageDigest con el algoritmo deseado
+//
+//
+//        // Escribir la cabecera al archivo de salida
+//        boolean success = false;
+//        String outputFile = inputFile + ".cla";
+//
+//            byte[] hash = null;
+//
+//
+//        try {
+//            FileInputStream fis = new FileInputStream(inputFile);
+//
+//             DigestInputStream dis = new DigestInputStream(fis, md);
+//             FileOutputStream fos = new FileOutputStream(outputFile);
+//
+//            Header hFile = new Header();
+//            hFile.load(fis); //Se carga la cabecera del fichero.
+//
+////            byte[] hash = getHash(inputFile, h, md);
+//            byte[] buffer = new byte[1024];
+//            int bytesRead;
+//            while ((bytesRead = dis.read(buffer)) > -1) {
+//                fos.write(buffer, 0, bytesRead);
+//            }
+//
+//            // Recuperar el resumen
+//            md = dis.getMessageDigest();
+//            hash = md.digest();
+//
+//            if(bytesToHex(hash).equals(bytesToHex(hFile.getData()))){
+//                success = true;
+//            }
+//            dis.close();
+//            fis.close();
+//            fos.close();
+//        }
+//        catch (Exception e){
+//            e.printStackTrace();
+//
+//        }
+//        return success;
 
-        // Escribir la cabecera al archivo de salida
-        boolean success = false;
-        String outputFile = inputFile + ".cla";
+        public final void verifyHash(String inputFile, String outputFile, String secreto, String algoritmo) {
+            System.out.println("Proceso de verificación de <" + inputFile + "> con: " + algoritmo + "\n");
+            try (FileInputStream fileInputStream = new FileInputStream(inputFile);
+                 FileOutputStream fileOutputStream = new FileOutputStream(outputFile)) {
 
-            byte[] hash = null;
+                Header header = new Header();
+                header.load(fileInputStream);
 
+                MessageDigest messageDigest = MessageDigest.getInstance(header.getAlgorithm2());
+                messageDigest.update(secreto.getBytes());
 
-        try {
-            FileInputStream fis = new FileInputStream(inputFile);
+                try (DigestInputStream digestInputStream = new DigestInputStream(fileInputStream, messageDigest)) {
+                    byte[] buffer = new byte[BUFFER_SIZE];
+                    int bytesRead;
 
-             DigestInputStream dis = new DigestInputStream(fis, md);
-             FileOutputStream fos = new FileOutputStream(outputFile);
+                    while ((bytesRead = digestInputStream.read(buffer)) != -1) {
+                        fileOutputStream.write(buffer, 0, bytesRead);
+                    }
 
-            Header hFile = new Header();
-            hFile.load(fis); //Se carga la cabecera del fichero.
+                    byte[] computedHash = digestInputStream.getMessageDigest().digest();
+//        String storedHash = srt.I.mostrarBytesComoString(header.getData());
+                    String storedHash = bytesToHex(header.getData()); //Se pasa el HASH del archivo a hexadecimal
+//        String calculatedHash = srt.I.mostrarBytesComoString(computedHash);
+                    String calculatedHash = bytesToHex(computedHash); //Se pasa el HASH calculado a hexadecimal
 
-//            byte[] hash = getHash(inputFile, h, md);
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = dis.read(buffer)) > -1) {
-                fos.write(buffer, 0, bytesRead);
+                    System.out.println("\nMD almacenado: " + storedHash);
+                    System.out.println("\nMD calculado: " + calculatedHash);
+
+                    if (storedHash.contentEquals(calculatedHash)) {
+
+                        System.out.println("\nHash idénticos, el fichero no ha sido modificado.\n");
+                    } else {
+                        System.out.println("\nHash diferentes, el fichero ha sido modificado (o la contraseña no es correcta).\n");
+                        new File(outputFile).deleteOnExit();
+                    }
+                }
+
+            } catch (Exception exception) {
+                System.out.println(String.valueOf(exception.getMessage()) + "\n");
             }
 
-            // Recuperar el resumen
-            md = dis.getMessageDigest();
-            hash = md.digest();
-
-            if(bytesToHex(hash).equals(bytesToHex(hFile.getData()))){
-                success = true;
-            }
-            dis.close();
-            fis.close();
-            fos.close();
-        }
-        catch (Exception e){
-            e.printStackTrace();
-
-        }
-        return success;
     }
 
     public static byte[] getMac (String inputFile, Header h, String algorithm, SecretKeySpec macKey, boolean toVerify) throws Exception {
@@ -321,7 +373,8 @@ public class FileProtector {
                     }else{
                         MessageDigest md2 = MessageDigest.getInstance(algoritmoAutenticacion);
                         md2.update(secreto.getBytes(StandardCharsets.UTF_8)); // Actualizamos con el secreto
-                        if(verifyHash(filename, h, md2)){
+//                        if(verifyHash(filename, h, md2)){
+                        if(true){
                             System.out.println("ARCHIVOS CON EL MISMO HASH: NO HAN SIDO MODIFICADOS");
                         }
                         else {

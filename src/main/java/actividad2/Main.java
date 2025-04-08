@@ -37,7 +37,7 @@ public class Main {
         scanner.close();
     }
 
-    private static void procesarCifrado(Scanner scanner) {
+    public static void procesarCifrado(Scanner scanner) {
         System.out.print("Ingrese la ruta del archivo a cifrar: ");
         String rutaArchivo = scanner.nextLine();
 
@@ -63,7 +63,7 @@ public class Main {
         }
     }
 
-    private static void procesarDescifrado(Scanner scanner) {
+    public static void procesarDescifrado(Scanner scanner) {
         System.out.print("Ingrese la ruta del archivo a descifrar: ");
         String rutaArchivo = scanner.nextLine();
 
