@@ -19,7 +19,19 @@ import javax.crypto.spec.PBEKeySpec;
 import actividad2.CifradoOriginal;
 import librerias.Header;
 import librerias.Options;
-
+/**
+ * Clase que permite proteger archivos mediante funciones criptográficas de integridad:
+ * <ul>
+ *     <li>Aplicación y verificación de funciones Hash (MessageDigest)</li>
+ *     <li>Aplicación y verificación de HMAC (Message Authentication Code)</li>
+ *     <li>Consulta de algoritmos disponibles (Digest y Cifrado)</li>
+ * </ul>
+ *
+ * <p>Esta clase extiende de {@link CifradoOriginal} y hace uso de {@link Header}
+ * para almacenar metadatos junto con los archivos protegidos.
+ *
+ * <p>Usa algoritmos como SHA-256, SHA-1, HmacSHA256, HmacSHA1, etc.
+ */
 public class FileProtectorMac extends CifradoOriginal {
 
     private static int BUFFER_SIZE = 32768;
@@ -29,12 +41,13 @@ public class FileProtectorMac extends CifradoOriginal {
     public FileProtectorMac() {}
 
     /**
-     * Carga la cabecera de un archivo especificado.
-     * @param inputFile Ruta del archivo a leer.
-     * @param header Objeto Header donde se almacenará la información de la cabecera.
-     * @return true si se carga correctamente, false en caso contrario.
+     * Carga la cabecera de un archivo que contiene metadatos con información
+     * criptográfica (hash o HMAC).
+     *
+     * @param inputFile Ruta del archivo desde donde se desea leer la cabecera.
+     * @param header Objeto {@link Header} que será rellenado con los metadatos.
+     * @return true si se ha cargado correctamente la cabecera; false si ocurre un error.
      */
-
     public final boolean cargarCabeceraArchivo(String inputFile, Header header) {
         try {
             FileInputStream fileInputStream = new FileInputStream(inputFile);
@@ -48,11 +61,13 @@ public class FileProtectorMac extends CifradoOriginal {
     }
 
     /**
-     * Aplica un hash a un archivo de entrada y escribe el resultado en un archivo de salida.
-     * @param inputFile Archivo de entrada.
-     * @param outputFile Archivo de salida.
-     * @param secreto Contraseña o clave para el hash.
-     * @param algoritmo Algoritmo de hashing a utilizar.
+     * Aplica un resumen HASH al archivo de entrada y guarda el archivo con la cabecera
+     * conteniendo dicho resumen. El resumen se calcula incluyendo la contraseña.
+     *
+     * @param inputFile Ruta del archivo original.
+     * @param outputFile Ruta del archivo de salida con la cabecera HASH.
+     * @param secreto Contraseña o clave para inicializar el hash.
+     * @param algoritmo Algoritmo de MessageDigest (ej. SHA-256, SHA-1).
      */
     public final void applyHash(String inputFile, String outputFile, String secreto, String algoritmo) {
         System.out.println("Proceso de hashing de <" + inputFile + "> con Algoritmo: " + algoritmo + "\n");
@@ -110,9 +125,10 @@ public class FileProtectorMac extends CifradoOriginal {
 
 
     /**
-     * Convierte bytes a hexadecimal
-     * @param bytes Los bytes a convertir
-     * @return String con el valor hexadcimal de los bytes pasado por parametro.
+     * Convierte un array de bytes a una cadena en formato hexadecimal.
+     *
+     * @param bytes Array de bytes a convertir.
+     * @return Cadena en formato hexadecimal.
      */
     protected static String bytesToHex(byte[] bytes) {
         StringBuilder sb = new StringBuilder();
@@ -188,7 +204,7 @@ public class FileProtectorMac extends CifradoOriginal {
      * Muestra las distintas opciones de algoritmos de MAC y devuelve el elegido
      * @return String Algoritmo de MAC elegido
      */
-    static String solicitarAlgoritmoHMAC() {
+    public static String solicitarAlgoritmoHMAC() {
         int alCifrado = -1;
         while (alCifrado < 0 || alCifrado >= Options.macAlgorithms.length) {
             for (int i = 0; i < Options.macAlgorithms.length; i++) {
@@ -317,7 +333,7 @@ public class FileProtectorMac extends CifradoOriginal {
     /**
      * Muestra los algoritmos de cifrado disponibles para utilizar
      */
-    final void MostrarInformacionAlgoritmosCifrado() {
+    public final void MostrarInformacionAlgoritmosCifrado() {
         Set<String> set = Security.getAlgorithms("Cipher");
         System.out.println("\nInformación sobre la JCE:");
         System.out.println("\nAlgoritmos de cifrado disponibles: \n");
@@ -330,7 +346,7 @@ public class FileProtectorMac extends CifradoOriginal {
     /**
      * Muestra los algoritmos disponibles a utilizar que nos proporciona el servicio de MessageDigest
      */
-    final void MostrarInformacionAlgoritmosResumen() {
+    public final void MostrarInformacionAlgoritmosResumen() {
         Set<String> set = Security.getAlgorithms("MessageDigest");
         System.out.println("\nInformación sobre la JCE:");
         System.out.println("Algoritmos de resumen disponibles: ");

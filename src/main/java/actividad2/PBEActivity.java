@@ -22,17 +22,33 @@ import java.security.SecureRandom;
 import java.util.Arrays;
 
 /**
- * Clase para cifrar y descifrar ficheros
+ * Clase que implementa funcionalidades de cifrado y descifrado de archivos
+ * usando algoritmos PBE (Password-Based Encryption) del API JCA.
+ *
+ * <p>Esta clase permite:
+ * <ul>
+ *   <li>Cifrar un archivo con contraseña usando PBE</li>
+ *   <li>Descifrar un archivo validando la contraseña mediante hash</li>
+ *   <li>Leer y escribir archivos cifrados o descifrados</li>
+ *   <li>Generar claves de sesión desde contraseñas</li>
+ * </ul>
+ *
+ * <p>Usa cabeceras personalizadas mediante la clase {@code Header}.
+ *
+ * <p>Asignatura: Seguridad en Redes Telemáticas
+ * <br>Autores: Guillén Torrado, Sara - Martín Ledesma, Sergio
  */
 public class PBEActivity {
     /**
-     * Configura el objeto de cifrado y cifra el fichero
+     * Cifra un archivo usando una contraseña simétrica, un algoritmo PBE
+     * y un número determinado de iteraciones. Guarda el resultado en un archivo ".cif".
      *
-     * @param filename         El nombre del fichero a cifrar
-     * @param password         La contraseña simétrica
-     * @param algoritmoCifrado El algoritmo de cifrado elegido
-     * @param numIteraciones   El número de iteraciones
-     * @throws Exception
+     * @param filename         Ruta del archivo a cifrar.
+     * @param password         Contraseña proporcionada por el usuario.
+     * @param algoritmoCifrado Algoritmo PBE a utilizar (ej. PBEWithMD5AndDES).
+     * @param numIteraciones   Número de iteraciones del algoritmo PBE.
+     * @param hashPassword     Hash de la contraseña para posterior validación.
+     * @throws Exception Si ocurre un error durante el proceso de cifrado.
      */
     public static void processingCipher(String filename, String password, String algoritmoCifrado, int numIteraciones, byte[] hashPassword) throws Exception {
 
@@ -62,7 +78,14 @@ public class PBEActivity {
 
     }
 
-
+    /**
+     * Verifica si el hash de la contraseña proporcionada coincide con el almacenado en la cabecera del archivo cifrado.
+     *
+     * @param ruta_archivo Ruta del archivo cifrado.
+     * @param hashPassword Hash calculado de la contraseña ingresada.
+     * @return true si los hashes coinciden; false en caso contrario.
+     * @throws Exception Si ocurre un error al leer la cabecera del archivo.
+     */
     public static boolean verifyPasswordHash(String ruta_archivo, byte[] hashPassword) throws Exception {
         Header h = new Header();
         FileInputStream fis = new FileInputStream(ruta_archivo);
@@ -93,12 +116,13 @@ public class PBEActivity {
     }
 
     /**
-     * Configura el objeto de descifrado y genera el fichero descifrado
+     * Descifra un archivo previamente cifrado mediante PBE.
+     * El archivo de salida tendrá extensión ".cla".
      *
-     * @param fichero        El nombre del fichero a descifrar
-     * @param password       La contraseña simétrica
-     * @param numIteraciones El número de iteraciones
-     * @throws Exception
+     * @param fichero        Ruta del archivo cifrado (.cif).
+     * @param password       Contraseña proporcionada por el usuario.
+     * @param numIteraciones Número de iteraciones del algoritmo PBE.
+     * @throws Exception Si ocurre un error durante el proceso de descifrado.
      */
     public static void processingDecipher(String fichero, String password, int numIteraciones) throws Exception {
         Header h = new Header();
@@ -125,14 +149,14 @@ public class PBEActivity {
     }
 
     /**
-     * Lee un fichero y lo encripta
+     * Lee el archivo original y genera su versión cifrada en un nuevo archivo ".cif",
+     * escribiendo primero una cabecera personalizada.
      *
-     * @param c        Objeto de cifrado inicializado
-     * @param filename Nombre del fichero a cifrar
-     * @param h        Cabecera inicializada
-     * @throws FileNotFoundException Si no se encuentra el fichero
-     * @throws IOException           Si hay un error al leer el fichero
-     * @throws Exception             Si hay un error al cifrar el fichero
+     * @param c        Objeto {@link Cipher} configurado para cifrar.
+     * @param filename Ruta del archivo original a cifrar.
+     * @param h        Objeto {@link Header} con información de metadatos.
+     * @return true si el archivo fue cifrado correctamente; false si ocurrió algún error.
+     * @throws Exception Si ocurre un error de escritura o cifrado.
      */
     public static boolean writeCipheredText(Cipher c, String filename, Header h) throws Exception {
         String outFile = filename + ".cif";
@@ -167,13 +191,14 @@ public class PBEActivity {
     }
 
     /**
-     * Descifra un fichero y guarda la salida en un fichero.cla
+     * Descifra el contenido de un archivo cifrado utilizando un {@link Cipher} configurado
+     * y lo guarda en un archivo con extensión ".cla".
      *
-     * @param c        Objeto de cifrado inicializado
-     * @param filename El nombre del fichero a descifrar
-     * @param fis      El flujo de entrada inicializado tras haber leído la cabecera
-     * @return true si se ha descifrado correctamente, y false en caso contrario
-     * @throws Exception Si hay un error al descifrar
+     * @param c        Objeto {@link Cipher} configurado para descifrar.
+     * @param filename Ruta del archivo cifrado.
+     * @param fis      Flujo de entrada ya posicionado después de la cabecera.
+     * @return true si el archivo fue descifrado correctamente; false en caso contrario.
+     * @throws Exception Si ocurre un error de lectura o descifrado.
      */
     public static boolean writeDecipheredText(Cipher c, String filename, FileInputStream fis) throws Exception {
         String outFile = filename + ".cla";
@@ -202,12 +227,13 @@ public class PBEActivity {
     }
 
     /**
-     * Genera una clave de sesión a partir de una contraseña y un algoritmo
+     * Genera una clave de sesión (clave simétrica) a partir de una contraseña
+     * utilizando el algoritmo PBE especificado.
      *
-     * @param password  Contraseña a partir de la cual se generará la clave de sesión
-     * @param algorithm Algoritmo con el que se generará la clave de sesión
-     * @return SecretKey Clave de sesión generada
-     * @throws Exception Si el algoritmo no existe o si la clave generada no es válida
+     * @param password  Contraseña proporcionada por el usuario.
+     * @param algorithm Algoritmo de cifrado (ej. PBEWithMD5AndDES).
+     * @return {@link SecretKey} generado desde la contraseña.
+     * @throws Exception Si el algoritmo no es válido o falla la generación.
      */
     public static SecretKey generateSessionKey(String password, String algorithm) throws Exception {
         System.out.println("GENERANDO CLAVE DE SESION");
@@ -221,10 +247,10 @@ public class PBEActivity {
     }
 
     /**
-     * Comprueba si una contraseña es segura
+     * Evalúa si una contraseña cumple los requisitos mínimos de seguridad.
      *
-     * @param password Contraseña a comprobar
-     * @return boolean True si la contraseña es segura, false en caso contrario
+     * @param password Contraseña introducida por el usuario.
+     * @return true si la contraseña tiene al menos 8 caracteres; false en caso contrario.
      */
     public static boolean securePassword(String password) {
         return password.length() >= 8;
