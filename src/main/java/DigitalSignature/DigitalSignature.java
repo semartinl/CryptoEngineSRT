@@ -116,9 +116,9 @@ public class DigitalSignature {
             FileOutputStream fileOutputStream = new FileOutputStream(pathSalida);
             FileInputStream fileInputStream = new FileInputStream(pathEntrada);
             Header cabecera = new Header();
-            System.out.println("Llega hasta la creación de la cabecera y antes del if de carga de la cabecera");
+
             if (cabecera.load(fileInputStream)) {
-                System.out.println("Se carga la cabecera: " + Arrays.toString(cabecera.getData()));
+
                 if(cabecera.getOperation() == Options.OP_SIGNED) {
                     System.out.println("La operación de la cabecera es de firma");
                     int j = 0;

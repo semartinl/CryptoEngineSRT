@@ -9,6 +9,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.util.Scanner;
 
 import static actividad2.Main.calcularHash;
@@ -22,6 +23,11 @@ public class MainGUI extends JFrame{
     private String algoritmoHMAC = Options.macAlgorithms[0];
     private String algoritmoFirma = Options.signAlgorithms[1];
     private KeyPair currentKeyPair = null;
+    private File actualPath = new File(System.getProperty("user.dir"));
+
+    //Variables para la craeciónd e un par de claves
+    private final String[] tiposClave = {"RSA", "DSA"};
+    private final String[] tamanosClave = {"512", "768", "1024"};
 
 
     public MainGUI() {
@@ -36,6 +42,7 @@ public class MainGUI extends JFrame{
         tabs.add("Hash", crearPanelHash());
         tabs.add("HMAC", crearPanelHMAC());
         tabs.add("Asimétrico", crearPanelAsimetrico());
+        tabs.add("Generar Claves", crearPanelGenerarClaves());
         tabs.add("Configuración", crearPanelConfiguracion());
 
         add(tabs);
@@ -186,14 +193,29 @@ public class MainGUI extends JFrame{
 
     private JPanel crearPanelAsimetrico() {
         JPanel panel = new JPanel(new GridLayout(9, 1));
-        JTextField archivo = new JTextField();
+//        JTextField archivo = new JTextField();
+
+        JLabel rutaArchivoLabel = new JLabel("Ningún archivo seleccionado");
+        JButton btnSeleccionarArchivo = new JButton("Seleccionar archivo");
+
+        btnSeleccionarArchivo.addActionListener(e -> {
+            JFileChooser fileChooser = new JFileChooser(actualPath);
+            fileChooser.setDialogTitle("Seleccionar archivo de entrada");
+            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            int resultado = fileChooser.showOpenDialog(this);
+            if (resultado == JFileChooser.APPROVE_OPTION) {
+                File archivo = fileChooser.getSelectedFile();
+                rutaArchivoLabel.setText(archivo.getAbsolutePath());
+            }
+        });
+
         JTextField archivoSalida = new JTextField();
         JTextField archivoFirma = new JTextField();
 //        JTextField clavePath = new JTextField();
         JLabel rutaClaveLabel = new JLabel("Ningún archivo seleccionado");
         JButton btnSeleccionarClave = new JButton("Seleccionar archivo .key");
 
-        JButton btnCargarClave = new JButton("Cargar Par de Claves");
+//        JButton btnCargarClave = new JButton("Cargar Par de Claves");
         JButton btnCifrar = new JButton("Cifrar con clave pública");
         JButton btnDescifrar = new JButton("Descifrar con clave privada");
         JButton btnFirmar = new JButton("Firmar archivo");
@@ -209,7 +231,7 @@ public class MainGUI extends JFrame{
 //        });
 
         btnSeleccionarClave.addActionListener(e -> {
-            JFileChooser fileChooser = new JFileChooser();
+            JFileChooser fileChooser = new JFileChooser(actualPath);
             fileChooser.setDialogTitle("Seleccionar archivo .key");
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             int resultado = fileChooser.showOpenDialog(this);
@@ -233,8 +255,16 @@ public class MainGUI extends JFrame{
                 mostrar("⚠️ Debes cargar un par de claves primero.");
                 return;
             }
+            if ("DSA".equalsIgnoreCase(currentKeyPair.getPublic().getAlgorithm())) {
+                JOptionPane.showMessageDialog(this,
+                        "❌ No se puede cifrar archivos con claves de tipo DSA.\nUtiliza RSA.",
+                        "Error de algoritmo",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
             try {
-                Encryption.cifrarBloques(archivo.getText(), archivoSalida.getText(), currentKeyPair.getPublic(), "RSA/ECB/PKCS1Padding");
+                Encryption.cifrarBloques(rutaArchivoLabel.getText(), archivoSalida.getText(), currentKeyPair.getPublic(), "RSA/ECB/PKCS1Padding");
                 mostrar("Archivo cifrado con clave pública.");
             } catch (Exception ex) {
                 mostrar("Error al cifrar: " + ex.getMessage());
@@ -246,8 +276,16 @@ public class MainGUI extends JFrame{
                 mostrar("⚠️ Debes cargar un par de claves primero.");
                 return;
             }
+            if ("DSA".equalsIgnoreCase(currentKeyPair.getPrivate().getAlgorithm())) {
+                JOptionPane.showMessageDialog(this,
+                        "❌ No se puede descifrar archivos con claves de tipo DSA.\nUtiliza RSA.",
+                        "Error de algoritmo",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
             try {
-                Encryption.descifrarBloques(archivo.getText(), archivoSalida.getText(), currentKeyPair.getPrivate());
+                Encryption.descifrarBloques(rutaArchivoLabel.getText(), archivoSalida.getText(), currentKeyPair.getPrivate());
                 mostrar("Archivo descifrado con clave privada.");
             } catch (Exception ex) {
                 mostrar("Error al descifrar: " + ex.getMessage());
@@ -259,9 +297,13 @@ public class MainGUI extends JFrame{
                 mostrar("⚠️ Debes cargar un par de claves primero.");
                 return;
             }
+            if ("DSA".equalsIgnoreCase(currentKeyPair.getPrivate().getAlgorithm())) {
+                algoritmoFirma = "SHA1withDSA";
+            }
+
             try {
 //                String algoritmo = DigitalSignature.solicitarAlgoritmoCifradoClavePublica(new Scanner(System.in));
-                DigitalSignature.firmarFicheroClavePrivada(archivoFirma.getText(), archivoSalida.getText(), currentKeyPair.getPrivate(), algoritmoFirma);
+                DigitalSignature.firmarFicheroClavePrivada(rutaArchivoLabel.getText(), archivoSalida.getText(), currentKeyPair.getPrivate(), algoritmoFirma);
                 mostrar("Archivo firmado correctamente.");
             } catch (Exception ex) {
                 mostrar("Error al firmar: " + ex.getMessage());
@@ -274,26 +316,85 @@ public class MainGUI extends JFrame{
                 return;
             }
             try {
-                boolean ok = DigitalSignature.verificarFicheroFirmado(archivoFirma.getText(), archivoSalida.getText(), currentKeyPair.getPublic());
-                mostrar(ok ? "✔️ Firma verificada correctamente." : "❌ Firma no válida.");
+                boolean ok = DigitalSignature.verificarFicheroFirmado(rutaArchivoLabel.getText(), archivoSalida.getText(), currentKeyPair.getPublic());
+                if (ok) {
+                    JOptionPane.showMessageDialog(this,
+                            "✅ La firma es válida.\nEl documento no ha sido modificado.",
+                            "Verificación Exitosa",
+                            JOptionPane.INFORMATION_MESSAGE
+                    );
+                } else {
+                    JOptionPane.showMessageDialog(this,
+                            "❌ La firma NO es válida.\nEs posible que el documento haya sido modificado o la clave pública no coincida.",
+                            "Verificación Fallida",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                }
             } catch (Exception ex) {
                 mostrar("Error al verificar firma: " + ex.getMessage());
             }
         });
 
-        panel.add(new JLabel("Archivo:")); panel.add(archivo);
+        panel.add(new JLabel("Archivo:")); panel.add(btnSeleccionarArchivo);
+        panel.add(new JLabel("Archivo de entrada seleccionado:")); panel.add(rutaArchivoLabel);
         panel.add(new JLabel("Archivo de salida / firma:")); panel.add(archivoSalida);
 //        panel.add(new JLabel("Archivo .key (par de claves):")); panel.add(clavePath);
 //        panel.add(btnCargarClave);
-        panel.add(new JLabel("Archivo .key (par de claves):"));
-        panel.add(rutaClaveLabel);
+        panel.add(new JLabel("Archivo .key (par de claves):"));  panel.add(rutaClaveLabel);
         panel.add(btnSeleccionarClave);
         panel.add(btnCifrar); panel.add(btnDescifrar);
-        panel.add(new JLabel("Firma para verificar:")); panel.add(archivoFirma);
+//        panel.add(new JLabel("Firma para verificar:")); panel.add(archivoFirma);
         panel.add(btnFirmar); panel.add(btnVerificar);
 
         return panel;
     }
+
+    private JPanel crearPanelGenerarClaves() {
+        JPanel panel = new JPanel(new GridLayout(7, 1));
+
+        JComboBox<String> comboTipo = new JComboBox<>(tiposClave);
+        JComboBox<String> comboTamano = new JComboBox<>(tamanosClave);
+        JTextField nombreArchivo = new JTextField("par_claves");
+
+        JButton btnGenerar = new JButton("Generar Par de Claves");
+
+        btnGenerar.addActionListener(e -> {
+            String tipo = (String) comboTipo.getSelectedItem();
+            int tam = Integer.parseInt((String) comboTamano.getSelectedItem());
+            String nombre = nombreArchivo.getText().trim();
+
+            if (nombre.isEmpty()) {
+                mostrar("⚠️ Debes introducir un nombre de archivo válido.");
+                return;
+            }
+
+            try {
+                KeyPairGenerator keyGen = KeyPairGenerator.getInstance(tipo);
+                keyGen.initialize(tam);
+                KeyPair kp = keyGen.generateKeyPair();
+
+                String ruta = System.getProperty("user.dir") + File.separator + nombre + ".key";
+                InterfazGraficaP4.saveKeyPairToFile(kp, ruta);
+
+                mostrar("✅ Claves generadas y guardadas correctamente en:\n" + ruta);
+
+            } catch (Exception ex) {
+                mostrar("❌ Error al generar claves: " + ex.getMessage());
+            }
+        });
+
+        panel.add(new JLabel("Selecciona el tipo de clave:"));
+        panel.add(comboTipo);
+        panel.add(new JLabel("Selecciona el tamaño de la clave (bits):"));
+        panel.add(comboTamano);
+        panel.add(new JLabel("Nombre del archivo (.key) a guardar:"));
+        panel.add(nombreArchivo);
+        panel.add(btnGenerar);
+
+        return panel;
+    }
+
+
 
 
     private void mostrar(String mensaje) {
