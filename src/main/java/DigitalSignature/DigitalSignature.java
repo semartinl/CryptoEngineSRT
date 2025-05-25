@@ -3,102 +3,105 @@ package DigitalSignature;
 import librerias.Header;
 import librerias.Options;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.*;
+import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
-import java.util.Arrays;
-import java.util.Scanner;
 
-import static actividad2.CifradoOriginal.leerIntegerTeclado;
 
+/**
+ * Clase de utilidad para gestionar operaciones relacionadas con claves criptográficas
+ * y firmas digitales. Proporciona métodos para guardar/cargar pares de claves y firmar archivos
+ * mediante clave privada.
+ *
+ * @author Sergio Martín Ledesma
+ */
 public class DigitalSignature {
     /**
-     * Firma un archivo con la clave privada proporcionada.
+     * Guarda un par de claves (privada y pública) en un archivo utilizando serialización.
      *
-     * @param inputFile Ruta del archivo que se desea firmar.
-     * @param signatureFile Ruta del archivo donde se guardará la firma generada.
-     * @param privateKey Clave privada utilizada para generar la firma digital.
-     * @throws Exception Si ocurre un error al leer/escribir archivos o en el proceso de firma digital.
+     * @param keyPair Par de claves a guardar.
+     * @param filename Nombre del archivo destino (sin extensión).
+     * @throws IOException Si ocurre un error al escribir el archivo.
      */
-    public static void signFile(String inputFile, String signatureFile, PrivateKey privateKey) throws Exception {
-        Signature signature = Signature.getInstance("SHA256withRSA");
-        signature.initSign(privateKey);
-
-        // Leer datos del archivo y firmar
-        try (FileInputStream fis = new FileInputStream(inputFile)) {
-            byte[] buffer = new byte[1024];
-            int len;
-            while ((len = fis.read(buffer)) != -1) {
-                signature.update(buffer, 0, len);
-            }
-        }
-
-        // Guardar la firma en un archivo
-        try (FileOutputStream fos = new FileOutputStream(signatureFile)) {
-            fos.write(signature.sign());
+    public static void saveKeyPairToFile(KeyPair keyPair, String filename) throws IOException {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename))) {
+            oos.writeObject(keyPair.getPrivate());
+            oos.writeObject(keyPair.getPublic());
         }
     }
     /**
-     * Verifica la firma de un archivo utilizando la clave pública proporcionada.
+     * Carga un par de claves previamente almacenado desde un archivo.
      *
-     * @param inputFile Ruta del archivo cuyo contenido se desea verificar.
-     * @param signatureFile Ruta del archivo que contiene la firma digital.
-     * @param publicKey Clave pública utilizada para verificar la firma.
-     * @return boolean true si la firma es válida, false en caso contrario.
-     * @throws Exception Si ocurre un error al leer archivos o en el proceso de verificación.
+     * @param filename Ruta del archivo que contiene el par de claves serializado.
+     * @return El objeto KeyPair reconstruido desde el archivo.
+     * @throws Exception Si ocurre un error al leer el archivo o deserializar las claves.
      */
-    // Verifica la firma de un archivo con la clave pública
-    public static boolean verifyFile(String inputFile, String signatureFile, PublicKey publicKey) throws Exception {
-        Signature signature = Signature.getInstance("SHA256withRSA");
-        signature.initVerify(publicKey);
-
-        // Leer datos del archivo y verificar
-        try (FileInputStream fis = new FileInputStream(inputFile)) {
-            byte[] buffer = new byte[1024];
-            int len;
-            while ((len = fis.read(buffer)) != -1) {
-                signature.update(buffer, 0, len);
-            }
+    public static KeyPair loadKeyPairFromFile(String filename) throws Exception {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filename))) {
+            PrivateKey privateKey = (PrivateKey) ois.readObject();
+            PublicKey publicKey = (PublicKey) ois.readObject();
+            return new KeyPair(publicKey, privateKey);
         }
-
-        // Leer firma
-        byte[] sigBytes = new byte[new FileInputStream(signatureFile).available()];
-        try (FileInputStream sigFis = new FileInputStream(signatureFile)) {
-            sigFis.read(sigBytes);
-        }
-
-        return signature.verify(sigBytes);
     }
+    /**
+     * Firma un archivo con la clave privada proporcionada utilizando el algoritmo especificado.
+     *
+     * El archivo firmado se guarda junto con una cabecera (`Header`) que contiene los metadatos
+     * necesarios para la verificación, como el algoritmo de firma y la firma generada.
+     *
+     * @param inputFile Ruta del archivo que se desea firmar.
+     * @param outputFile Ruta del archivo de salida que contendrá la firma y el contenido original.
+     * @param paramPrivateKey Clave privada utilizada para firmar el archivo.
+     * @param algoritmoClavePrivada Algoritmo de firma digital (por ejemplo, "SHA256withRSA").
+     *
+     * @throws Exception Si ocurre un error durante la lectura/escritura de archivos o el proceso de firma.
+     */
     public static final void firmarFicheroClavePrivada(String inputFile, String outputFile, PrivateKey paramPrivateKey, String algoritmoClavePrivada) {
         try {
+            // Se abre el archivo a firmar para leer su contenido
             FileInputStream fileInputStream = new FileInputStream(inputFile);
-            int j = 0;
-            int k = fileInputStream.available();
+
+            // Inicializamos el objeto Signature con el algoritmo seleccionado
             Signature signature = Signature.getInstance(algoritmoClavePrivada);
             signature.initSign(paramPrivateKey);
+
             byte[] buffer = new byte[1024];
             int i;
+
+            // Se procesa el archivo por bloques para actualizar la firma
             while ((i = fileInputStream.read(buffer)) > -1) {
-                j += i;
                 signature.update(buffer, 0, i);
             }
 
+            // Se genera la firma final a partir del contenido leído
             byte[] firma = signature.sign();
 
+            // Se prepara el archivo de salida
             FileOutputStream fileOutputStream = new FileOutputStream(outputFile);
             fileInputStream.close();
 
+            // Se vuelve a abrir el archivo original para copiar su contenido después de la cabecera
             FileInputStream newFileInputStream = new FileInputStream(inputFile);
+
+            // Se construye la cabecera con los datos de firma
             Header headerCifradoMAC = new Header(Options.OP_SIGNED, "none", algoritmoClavePrivada, firma);
+
+            // Se guarda la cabecera al inicio del archivo firmado
             headerCifradoMAC.save(fileOutputStream);
 
-            while ((i = newFileInputStream.read(buffer)) != -1)
+            // Se copia el contenido original del archivo
+            while ((i = newFileInputStream.read(buffer)) != -1) {
                 fileOutputStream.write(buffer, 0, i);
+            }
+
+            // Se cierran los flujos
             fileOutputStream.close();
             newFileInputStream.close();
+
         } catch (Exception exception) {
+            // Cualquier excepción se muestra por consola
             System.err.println(exception);
         }
     }
@@ -112,99 +115,58 @@ public class DigitalSignature {
      */
     public static final boolean verificarFicheroFirmado(String pathEntrada, String pathSalida, PublicKey paramPublicKey) {
         boolean bool = false;
-        try {
-            FileOutputStream fileOutputStream = new FileOutputStream(pathSalida);
-            FileInputStream fileInputStream = new FileInputStream(pathEntrada);
-            Header cabecera = new Header();
 
+        try {
+            // Abrimos el archivo firmado
+            FileInputStream fileInputStream = new FileInputStream(pathEntrada);
+            FileOutputStream fileOutputStream = new FileOutputStream(pathSalida);
+
+            // Se carga la cabecera que contiene los metadatos de la firma
+            Header cabecera = new Header();
             if (cabecera.load(fileInputStream)) {
 
-                if(cabecera.getOperation() == Options.OP_SIGNED) {
+                // Se comprueba que la cabecera indica una operación de firma
+                if (cabecera.getOperation() == Options.OP_SIGNED) {
                     System.out.println("La operación de la cabecera es de firma");
-                    int j = 0;
-                    int k = fileInputStream.available();
 
+                    // Se prepara la instancia del algoritmo de firma para verificación
                     Signature signature = Signature.getInstance(cabecera.getAlgorithm2());
-
                     signature.initVerify(paramPublicKey);
+
                     byte[] buffer = new byte[1024];
                     int i;
+
+                    // Se procesa el contenido original del archivo
                     while ((i = fileInputStream.read(buffer)) > -1) {
-                        j += i;
-                        signature.update(buffer, 0, i);
-                        fileOutputStream.write(buffer, 0, i);
+                        signature.update(buffer, 0, i);              // Se actualiza el objeto de verificación
+                        fileOutputStream.write(buffer, 0, i);        // Se guarda una copia limpia del contenido
                     }
 
+                    // Verificamos la firma comparando con la almacenada en la cabecera
                     if (signature.verify(cabecera.getData())) {
-
                         bool = true;
                     } else {
-
                         bool = false;
                     }
+
+                    // Cerramos los flujos
+                    fileOutputStream.close();
+                    fileInputStream.close();
+
+                } else {
+                    // Si el archivo no fue generado con firma, se avisa y se cierran los flujos
+                    System.out.println("\nArchivo no utilizado para firmas.\n");
                     fileOutputStream.close();
                     fileInputStream.close();
                 }
-                else {
-                    System.out.println("\nArchivo no utilizado para firmas.\n");
-                }
-
             }
+
         } catch (Exception exception) {
             System.err.println(exception);
         }
+
         return bool;
     }
 
-    /**
-     * Muestra las distintas opciones de algoritmos de cifrado y devuelve el elegido
-     * @return String Algoritmo de cifrado elegido
-     */
-    public static String solicitarAlgoritmoCifradoClavePublica(Scanner scanner) {
-        int alCifrado = -1;
-        while (alCifrado < 0 || alCifrado >= Options.signAlgorithms.length) {
-            for (int i = 0; i < Options.signAlgorithms.length; i++) {
-                System.out.println("[" + i + "]" + Options.signAlgorithms[i]);
-            }
-            alCifrado = leerIntegerTeclado("Elige un algoritmo de cifrado: ");
-        }
-        return Options.signAlgorithms[alCifrado];
-    }
-
-    /**
-     * Funcion que nos permite cambiar o añadir una nueva extensión, si el fichero no la tiene.
-     *
-     * @param pathFichero Fichero que se va a cambiar o añadir una extension
-     * @param extension Una extension del fichero que se quiere crear
-     * @return La direccion del fichero con la nueva extensión
-     */
-    public static final String cambioExtensionFichero(String pathFichero, String extension) {
-        int i;
-        return ((i = pathFichero.lastIndexOf(".")) == -1) ? (String.valueOf(pathFichero) + "." + extension) : (String.valueOf(pathFichero.substring(0, i)) + "." + extension);
-    }
-
-    /**
-     * Elimina la última extensión de un archivo en una ruta, si esta existe.
-     *
-     * @param path Ruta del archivo cuya última extensión se desea eliminar.
-     * @return String Ruta sin la última extensión. Si no hay una extensión válida, devuelve la ruta original.
-     */
-    public static String eliminarUltimaExtension(String path) {
-        if (path == null || path.isEmpty()) {
-            return path; // Retornar tal cual si el path es nulo o vacío
-        }
-
-        // Encontrar la última posición del punto
-        int lastDotIndex = path.lastIndexOf('.');
-        int lastSeparatorIndex = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\')); // Soporte para diferentes OS
-
-        // Verificar si el punto está después del último separador (es una extensión válida)
-        if (lastDotIndex > lastSeparatorIndex) {
-            return path.substring(0, lastDotIndex);
-        }
-
-        // Si no hay extensión válida, retornar el path original
-        return path;
-    }
 }
 

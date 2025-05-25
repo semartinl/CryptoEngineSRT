@@ -1,8 +1,11 @@
 package DigitalSignature;
 import librerias.Header;
+import librerias.Options;
+
 import javax.crypto.Cipher;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.interfaces.RSAKey;
@@ -18,31 +21,41 @@ public class Encryption {
      */
     public static final void cifrarBloques(String inputFile, String ouputFile, PublicKey paramPublicKey, String algoritmoCifAsimetrico) {
         try {
+            // Se abre el archivo de salida y entrada
             FileOutputStream fileOutputStream = new FileOutputStream(ouputFile);
             FileInputStream fileInputStream = new FileInputStream(inputFile);
+
+            // Se crea una cabecera con información del algoritmo usado
             byte[] arrayOfByte1 = new byte[1];
-            Header header = new Header((byte)20, algoritmoCifAsimetrico, "none", arrayOfByte1);
-            header.save(fileOutputStream);
+            Header header = new Header(Options.OP_PUBLIC_CIPHER, algoritmoCifAsimetrico, "none", arrayOfByte1);
+            header.save(fileOutputStream); // Guardamos la cabecera en el archivo cifrado
+
+            // Se inicializa el cifrador con la clave pública
             Cipher cipher = Cipher.getInstance(algoritmoCifAsimetrico);
-            cipher.init(1, paramPublicKey);
-            // Cálculo del tamaño máximo que puede cifrar RSA (depende de la clave y el padding)
+            cipher.init(Cipher.ENCRYPT_MODE, paramPublicKey);
+
+            // Se calcula el tamaño de bloque máximo permitido por la clave pública y el padding
             int keySizeBytes = ((RSAKey) paramPublicKey).getModulus().bitLength() / 8;
-            int blockSize = keySizeBytes - 11; // para PKCS1Padding
+            int blockSize = keySizeBytes - 11; // PKCS1Padding reserva 11 bytes
             System.out.println("Tamaño de cifrado del algoritmo: " + cipher.getBlockSize());
             System.out.println("Tamaño del cifrado por bloque (blocksize): " + blockSize);
-            byte b1 = 53;
-            byte b2 = 0;
-            int j = 0;
-            int k = fileInputStream.available();
+
+            byte b2 = 0; // contador de bloques
+            int j = 0;   // contador de bytes totales
             byte[] arrayOfByte2 = new byte[blockSize];
             int i;
+
+            // Se lee y cifra el archivo por bloques compatibles con el tamaño RSA
             while ((i = fileInputStream.read(arrayOfByte2)) != -1) {
-                byte[] arrayOfByte = cipher.doFinal(arrayOfByte2, 0, i);
-                fileOutputStream.write(arrayOfByte);
+                byte[] arrayOfByte = cipher.doFinal(arrayOfByte2, 0, i); // Se cifra el bloque
+                fileOutputStream.write(arrayOfByte); // Se escribe en el archivo de salida
                 b2++;
                 j += i;
             }
+
             System.out.println("\nCifrados " + b2 + " bloques; " + j + " bytes.\n");
+
+            // Se cierran los flujos
             fileOutputStream.close();
             fileInputStream.close();
         } catch (Exception exception) {
@@ -57,88 +70,61 @@ public class Encryption {
      * @param paramPrivateKey Clave privada a utilizar para descifrar el contenido del archivo
      */
 
-    public static final void descifrarBloques(String inputFile, String outputFile, PrivateKey paramPrivateKey) {
+    public static final boolean descifrarBloques(String inputFile, String outputFile, PrivateKey paramPrivateKey) throws Exception {
+        FileOutputStream fileOutputStream = null;
+        FileInputStream fileInputStream = null;
         try {
-            FileOutputStream fileOutputStream = new FileOutputStream(outputFile);
-            FileInputStream fileInputStream = new FileInputStream(inputFile);
+            // Se abre el archivo de salida y el de entrada cifrado
+            fileOutputStream = new FileOutputStream(outputFile);
+            fileInputStream = new FileInputStream(inputFile);
+
+            // Se carga la cabecera que contiene metadatos del algoritmo utilizado
             Header header = new Header();
+
             if (header.load(fileInputStream)) {
-                Cipher cipher = Cipher.getInstance(header.getAlgorithm1());
-                cipher.init(2, paramPrivateKey);
-                int keySizeBytes = ((RSAKey) paramPrivateKey).getModulus().bitLength() / 8;
-                int blockSize = keySizeBytes - 11; // para PKCS1Padding
-                System.out.println("Tamaño de cifrado del algoritmo: " + cipher.getBlockSize());
-                System.out.println("Tamaño del cifrado por bloque (blocksize): " + blockSize);
-                byte b1 = 64;
-                byte b2 = 0;
-                int j = 0;
-                int k = fileInputStream.available();
-                byte[] buffer = new byte[b1];
-                int i;
-                while ((i = fileInputStream.read(buffer)) != -1) {
-                    byte[] arrayOfByte1 = cipher.doFinal(buffer, 0, i);
-                    fileOutputStream.write(arrayOfByte1);
-                    b2++;
-                    j += i;
+                if (header.getOperation() == Options.OP_PUBLIC_CIPHER) {
+                    // Se inicializa el cifrador con la clave privada
+                    Cipher cipher = Cipher.getInstance(header.getAlgorithm1());
+                    cipher.init(Cipher.DECRYPT_MODE, paramPrivateKey);
+
+                    // Se calcula el tamaño de bloque de entrada según la clave
+                    int keySizeBytes = ((RSAKey) paramPrivateKey).getModulus().bitLength() / 8;
+                    int blockSize = keySizeBytes;
+                    System.out.println("Tamaño de cifrado del algoritmo: " + cipher.getBlockSize());
+                    System.out.println("Tamaño del cifrado por bloque (blocksize): " + blockSize);
+
+                    byte b2 = 0; // bloques procesados
+                    int j = 0;   // total de bytes
+                    byte[] buffer = new byte[blockSize];
+                    int i;
+
+                    // Se lee y descifra el archivo por bloques RSA
+                    while ((i = fileInputStream.read(buffer)) != -1) {
+                        byte[] arrayOfByte1 = cipher.doFinal(buffer, 0, i); // Se descifra
+                        fileOutputStream.write(arrayOfByte1);               // Se escribe el bloque descifrado
+                        b2++;
+                        j += i;
+                    }
+
+                    System.out.println("\nDescifrados " + b2 + " bloques; " + j + " bytes.\n");
+
+
                 }
-                System.out.println("\nDescifrados " + b2 + " bloques; " + j + " bytes.\n");
-                fileOutputStream.close();
-                fileInputStream.close();
+
             }
-        } catch (Exception exception) {
-            exception.printStackTrace();
+            else {
+                System.out.println("Error: El fichero no se encuentra cifrado");
+                throw new Exception("Error: El fichero no se encuentra cifrado");
+
+            }
+
+        }finally {
+            // Se cierran los flujos
+            if (fileInputStream != null) fileInputStream.close();
+            if (fileOutputStream != null) fileOutputStream.close();
         }
+        return true;
     }
 
-    /**
-     * Encripta un archivo utilizando la clave pública proporcionada.
-     *
-     * @param inputFile Ruta del archivo que se desea encriptar.
-     * @param encryptedFile Ruta del archivo donde se guardará el contenido encriptado.
-     * @param publicKey Clave pública utilizada para encriptar el contenido del archivo.
-     * @throws Exception Si ocurre un error al leer/escribir archivos o durante el proceso de encriptación.
-     */
-    public static void encryptFile(String inputFile, String encryptedFile, PublicKey publicKey) throws Exception {
-        Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-        cipher.init(Cipher.ENCRYPT_MODE, publicKey);
-
-
-
-        try (FileInputStream fis = new FileInputStream(inputFile);
-             FileOutputStream fos = new FileOutputStream(encryptedFile)) {
-
-            byte[] buffer = new byte[53]; // Tamaño de bloque para RSA
-            int len;
-            while ((len = fis.read(buffer)) != -1) {
-                byte[] encrypted = cipher.doFinal(buffer, 0, len);
-                fos.write(encrypted);
-            }
-        }
-    }
-
-    /**
-     * Desencripta un archivo utilizando la clave privada proporcionada.
-     *
-     * @param encryptedFile Ruta del archivo encriptado que se desea desencriptar.
-     * @param outputFile Ruta del archivo donde se guardará el contenido desencriptado.
-     * @param privateKey Clave privada utilizada para desencriptar el contenido del archivo.
-     * @throws Exception Si ocurre un error al leer/escribir archivos o durante el proceso de desencriptación.
-     */
-    public static void decryptFile(String encryptedFile, String outputFile, PrivateKey privateKey) throws Exception {
-
-        Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-        cipher.init(Cipher.DECRYPT_MODE, privateKey);
-
-        try (FileInputStream fis = new FileInputStream(encryptedFile);
-             FileOutputStream fos = new FileOutputStream(outputFile)) {
-
-            byte[] buffer = new byte[256]; // Tamaño de bloque para RSA
-            int len;
-            while ((len = fis.read(buffer)) != -1) {
-                byte[] decrypted = cipher.doFinal(buffer, 0, len);
-                fos.write(decrypted);
-            }
-        }
-    }
 }
 

@@ -18,6 +18,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Arrays;
 
@@ -36,7 +38,7 @@ import java.util.Arrays;
  * <p>Usa cabeceras personalizadas mediante la clase {@code Header}.
  *
  * <p>Asignatura: Seguridad en Redes Telemáticas
- * <br>Autores: Guillén Torrado, Sara - Martín Ledesma, Sergio
+ * <br>Autores: Martín Ledesma, Sergio
  */
 public class PBEActivity {
     /**
@@ -51,25 +53,20 @@ public class PBEActivity {
      * @throws Exception Si ocurre un error durante el proceso de cifrado.
      */
     public static void processingCipher(String filename, String password, String algoritmoCifrado, int numIteraciones, byte[] hashPassword) throws Exception {
-
-        Options confAlgoritmo = new Options();
-        confAlgoritmo.setCipherAlgorithm(algoritmoCifrado);
+        //Se comienza el proceso de cifrado
         Cipher c = Cipher.getInstance(algoritmoCifrado);
 
+        //Se genera la clave de sesión para el proceso de cifrado
         SecretKey sKey = generateSessionKey(password, algoritmoCifrado);
 
-        byte[] salt;
-        SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
-//        SecureRandom random = SecureRandom.getInstance("DEFAULT", "BC");
-        salt = random.generateSeed(8);
+        //Se genera y configura la cabecera a guardar en el fichero. Se genera el salt aleatorio.
+        Header h = new Header(hashPassword, algoritmoCifrado, Options.OP_SYMMETRIC_CIPHER);
 
-        PBEParameterSpec pPS = new PBEParameterSpec(salt, numIteraciones);
+        PBEParameterSpec pPS = new PBEParameterSpec(h.getData(), numIteraciones);
 
+        //Se inicia el proceso de cifrado con las variables anteriormente configuradas.
         c.init(Cipher.ENCRYPT_MODE, sKey, pPS);
-
-        Header h = new Header(Options.OP_SYMMETRIC_CIPHER, algoritmoCifrado,
-                Options.authenticationAlgorithms[0],salt, hashPassword);
-
+        //Se escribe el fichero cifrado en el archivo de salida establecido. Si sale un error, se muestra por pantalla un error. Sino, se genera un mensaje de retroalimentación por pantalla.
         if (!writeCipheredText(c, filename, h)) {
             System.out.println("Error al cifrar el fichero");
         } else {
@@ -91,23 +88,9 @@ public class PBEActivity {
         FileInputStream fis = new FileInputStream(ruta_archivo);
 
         boolean equal = false;
+        //Se carga la cabecera del archivo a verificar
         if (h.load(fis)) {
-//            String algoritmoCifrado = h.getAlgorithm1();
-//            byte[] salt = h.getData();
-//
-//            Options confAlgoritmo = new Options();
-//            confAlgoritmo.setCipherAlgorithm(algoritmoCifrado);
-//            Cipher c = Cipher.getInstance(algoritmoCifrado);
-//
-//            SecretKey sKey = generateSessionKey(password, algoritmoCifrado);
-//            PBEParameterSpec pPS = new PBEParameterSpec(salt, numIteraciones);
-//
-//            c.init(Cipher.DECRYPT_MODE, sKey, pPS);
-            String algoritmoCifrado = h.getAlgorithm1();
-            System.out.println(algoritmoCifrado);
-
-            System.out.println("Hash guardado en la cabecera: " + Arrays.toString(h.getHashPassword()));
-            System.out.println("Hash calculado: " + Arrays.toString(hashPassword));
+            //Se comprueba si son iguales. Si es así, se cambia la bandera a verdadero.
             if(Arrays.equals(h.getHashPassword(), hashPassword)) {
                 equal = true;
             }
@@ -128,18 +111,21 @@ public class PBEActivity {
         Header h = new Header();
         FileInputStream fis = new FileInputStream(fichero);
         if (h.load(fis)) {
+            //Guardamos el algoritmo de cifrado y el salt geneardo en el Header de forma aleatoria
             String algoritmoCifrado = h.getAlgorithm1();
             byte[] salt = h.getData();
 
-            Options confAlgoritmo = new Options();
-            confAlgoritmo.setCipherAlgorithm(algoritmoCifrado);
+            //Configuramos el cifrado con el algoritmo de cifrado elegido
             Cipher c = Cipher.getInstance(algoritmoCifrado);
 
+            //Se genera una clave de sesión con la contraseña y algoritmo de cifrado elegido
             SecretKey sKey = generateSessionKey(password, algoritmoCifrado);
             PBEParameterSpec pPS = new PBEParameterSpec(salt, numIteraciones);
 
+            //Se inicializa el proceso de cifrado
             c.init(Cipher.DECRYPT_MODE, sKey, pPS);
 
+            //Se descifra el fichero. Si hay un error, salta por pantalla. Sino, se genera un texto de retroalimentación exitosa.
             if (!writeDecipheredText(c, fichero, fis)) {
                 System.out.println("Error al descifrar el fichero");
             } else {
@@ -159,34 +145,52 @@ public class PBEActivity {
      * @throws Exception Si ocurre un error de escritura o cifrado.
      */
     public static boolean writeCipheredText(Cipher c, String filename, Header h) throws Exception {
+        // Se define el nombre del archivo de salida agregando la extensión ".cif"
         String outFile = filename + ".cif";
 
-        FileOutputStream fos = new FileOutputStream(outFile); // Abre el flujo de outFile desde un fichero
-        CipherOutputStream cos = new CipherOutputStream(fos, c); // Abre el flujo de outFile cifrado
+        // Se crea un flujo de salida para escribir en el archivo cifrado
+        FileOutputStream fos = new FileOutputStream(outFile);
 
+        // Se envuelve el flujo de salida en un CipherOutputStream, para que los datos se cifren al escribirlos
+        CipherOutputStream cos = new CipherOutputStream(fos, c);
+
+        // Bandera que indicará si el proceso fue exitoso
         boolean success = false;
 
+        // Se escribe la cabecera personalizada al principio del archivo
         if (!h.save(fos)) {
             System.out.println("Error al guardar la cabecera");
         }
-        System.out.println("Llega despues de escribir el fichero");
+
         try {
+            // Se abre el flujo de lectura del archivo original
             FileInputStream fis = new FileInputStream(filename);
+
+            // Búfer para leer los datos por bloques
             byte[] buffer = new byte[1024];
             int bytesRead;
+
+            // Se leen bloques del archivo original y se escriben cifrados en el nuevo archivo
             while ((bytesRead = fis.read(buffer)) > -1) {
                 cos.write(buffer, 0, bytesRead);
             }
 
+            // Se cierra el flujo de entrada después de leer todo el archivo
             fis.close();
+
+            // Se marca como exitoso
             success = true;
+
         } catch (FileNotFoundException e) {
+            // Si no se encuentra el archivo original, se imprime el error
             e.printStackTrace();
         }
 
+        // Se cierran los flujos de salida cifrada y normal
         cos.close();
         fos.close();
 
+        // Se retorna true si el proceso fue exitoso, false en caso contrario
         return success;
     }
 
@@ -201,31 +205,45 @@ public class PBEActivity {
      * @throws Exception Si ocurre un error de lectura o descifrado.
      */
     public static boolean writeDecipheredText(Cipher c, String filename, FileInputStream fis) throws Exception {
+        // Se define el nombre del archivo de salida agregando la extensión ".cla"
         String outFile = filename + ".cla";
 
-        FileOutputStream fos = new FileOutputStream(outFile); // Abre el flujo de outFile desde un fichero
+        // Se abre el flujo de salida donde se escribirá el archivo descifrado
+        FileOutputStream fos = new FileOutputStream(outFile);
 
+        // Bandera que indica si la operación fue exitosa
         boolean success = false;
+
         try {
+            // Se envuelve el flujo de entrada con CipherInputStream para aplicar descifrado al vuelo
             CipherInputStream cis = new CipherInputStream(fis, c);
 
+            // Búfer para leer los datos en bloques
             byte[] buffer = new byte[1024];
             int bytesRead;
+
+            // Lectura del archivo cifrado y escritura directa del contenido descifrado
             while ((bytesRead = cis.read(buffer)) > -1) {
                 fos.write(buffer, 0, bytesRead);
             }
 
+            // Se cierra el flujo de entrada una vez finalizada la lectura
             fis.close();
+
+            // Se marca la operación como exitosa
             success = true;
+
         } catch (FileNotFoundException e) {
+            // En caso de que no se encuentre el archivo, se imprime el error
             e.printStackTrace();
         }
 
+        // Se cierra el flujo de salida, asegurando que se escriban todos los datos
         fos.close();
 
+        // Se devuelve true si todo salió bien, false en caso de error
         return success;
     }
-
     /**
      * Genera una clave de sesión (clave simétrica) a partir de una contraseña
      * utilizando el algoritmo PBE especificado.
@@ -236,24 +254,46 @@ public class PBEActivity {
      * @throws Exception Si el algoritmo no es válido o falla la generación.
      */
     public static SecretKey generateSessionKey(String password, String algorithm) throws Exception {
-        System.out.println("GENERANDO CLAVE DE SESION");
+
+        // Se convierte la contraseña a un arreglo de caracteres y se encapsula en un PBEKeySpec
+        // Este objeto representa la especificación de clave que usará la factoría
         PBEKeySpec pbeKeySpec = new PBEKeySpec(password.toCharArray());
 
+        // Se obtiene una factoría de claves basada en el algoritmo de cifrado especificado
         SecretKeyFactory kf = SecretKeyFactory.getInstance(algorithm);
 
+        // A partir de la especificación (PBEKeySpec), se genera una clave secreta
         SecretKey sKey = kf.generateSecret(pbeKeySpec);
-        return sKey;
 
+        // Se devuelve la clave generada
+        return sKey;
     }
 
+
     /**
-     * Evalúa si una contraseña cumple los requisitos mínimos de seguridad.
+     * Calcula un hash SHA-256 a partir de la contraseña proporcionada y devuelve los primeros 8 bytes del resultado.
      *
-     * @param password Contraseña introducida por el usuario.
-     * @return true si la contraseña tiene al menos 8 caracteres; false en caso contrario.
+     * Este método es útil, por ejemplo, para derivar claves o generar valores de comprobación simplificados a partir de contraseñas.
+     *
+     * @param contrasena Cadena de texto que representa la contraseña a hashear.
+     * @return Un arreglo de 8 bytes que contiene los primeros bytes del hash SHA-256 calculado.
+     * @throws RuntimeException Si ocurre un error al obtener el algoritmo de hash o al procesar la cadena.
      */
-    public static boolean securePassword(String password) {
-        return password.length() >= 8;
+    public static byte[] calcularHash(String contrasena) {
+        try {
+            // Se obtiene una instancia del algoritmo de resumen SHA-256
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+
+            // Se convierte la contraseña a bytes (UTF-8) y se calcula el hash completo (32 bytes)
+            byte[] hash = digest.digest(contrasena.getBytes(StandardCharsets.UTF_8));
+
+            // Se retorna únicamente los primeros 8 bytes del hash (para usar como clave corta, IV, etc.)
+            return Arrays.copyOf(hash, 8);
+
+        } catch (Exception e) {
+            // Si ocurre cualquier excepción durante el proceso, se lanza como RuntimeException
+            throw new RuntimeException("Error al calcular hash de la contraseña", e);
+        }
     }
 
 }

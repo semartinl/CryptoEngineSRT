@@ -1,232 +1,155 @@
 package Actividad5;
 
 
-import DigitalSignature.InterfazGraficaP4;
-import org.bouncycastle.cert.X509v3CertificateBuilder;
-import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
-import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
-import org.bouncycastle.operator.ContentSigner;
-import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
-
-import javax.security.auth.x500.X500Principal;
 import java.io.*;
-import java.math.BigInteger;
+
 import java.security.*;
 import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.Scanner;
 
-import static DigitalSignature.InterfazGraficaP4.loadKeyPairFromFile;
-import static DigitalSignature.InterfazGraficaP4.mostrarSubmenuAsimetrico;
-
-
+/**
+ * Clase que gestiona el acceso y operaciones sobre un almacén de claves (KeyStore),
+ * incluyendo carga, lectura de alias, recuperación de pares de claves y almacenamiento seguro.
+ *
+ * Soporta los formatos JKS y PKCS12, y permite la detección automática del tipo según la extensión del archivo.
+ *
+ * Esta clase está diseñada para integrarse tanto en aplicaciones gráficas como en línea de comandos.
+ *
+ * @author Sergio Martín Ledesma
+ */
 public class KeyStoreManager {
     private KeyStore keyStore;
     private String keyStorePath;
     private char[] keyStorePassword;
+    /**
+     * Devuelve la contraseña actual del KeyStore.
+     *
+     * @return Contraseña del KeyStore.
+     */
+    public char[] getKeyStorePassword() {
+        return keyStorePassword;
+    }
+    /**
+     * Establece una nueva contraseña para el KeyStore.
+     *
+     * @param keyStorePassword Contraseña a establecer.
+     */
+    public void setKeyStorePassword(char[] keyStorePassword) {
+        this.keyStorePassword = keyStorePassword;
+    }
+    /**
+     * Devuelve la ruta del archivo del KeyStore.
+     *
+     * @return Ruta del archivo del KeyStore.
+     */
+    public String getKeyStorePath() {
+        return keyStorePath;
+    }   /**
+     * Establece una nueva ruta para el archivo KeyStore.
+     *
+     * @param keyStorePath Nueva ruta del archivo.
+     */
+
+    public void setKeyStorePath(String keyStorePath) {
+        this.keyStorePath = keyStorePath;
+    }
+    /**
+     * Devuelve el objeto KeyStore actualmente cargado.
+     *
+     * @return KeyStore cargado en memoria.
+     */
+    public KeyStore getKeyStore() {
+        return keyStore;
+    }
+    /**
+     * Asigna un nuevo objeto KeyStore.
+     *
+     * @param keyStore KeyStore a establecer.
+     */
+    public void setKeyStore(KeyStore keyStore) {
+        this.keyStore = keyStore;
+    }
+    /**
+     * Crea una instancia de KeyStoreManager y carga el almacén de claves desde el archivo proporcionado.
+     * Si el archivo no existe, se crea uno nuevo con el tipo PKCS12 por defecto.
+     *
+     * @param keyStorePath Ruta del archivo del almacén de claves.
+     * @param keyStorePassword Contraseña del almacén de claves.
+     * @throws Exception Si ocurre un error al cargar o crear el KeyStore.
+     */
 
     public KeyStoreManager(String keyStorePath, char[] keyStorePassword) throws Exception {
         this.keyStorePath = keyStorePath;
         this.keyStorePassword = keyStorePassword;
         this.keyStore = KeyStore.getInstance("JKS");
+
         File file = new File(keyStorePath);
-        // Verifica si el archivo existe y no está vacío
-//        if (file.exists() && file.length() > 0) {
-//            try (FileInputStream fis = new FileInputStream(keyStorePath)) {
-//                keyStore.load(fis, keyStorePassword);
-//            }
-//        } else {
-//            keyStore.load(null, keyStorePassword);
-//            saveKeyStore();
-//        }
-        // Verifica si el archivo existe y no está vacío
+
+        // Verifica si el archivo del KeyStore existe y no está vacío
         if (file.exists() && file.length() > 0) {
             try (FileInputStream fis = new FileInputStream(keyStorePath)) {
+                // Detecta el tipo de almacén (JKS o PKCS12) según la extensión del archivo
                 keyStore = KeyStore.getInstance(detectKeyStoreType(keyStorePath));
+
+                // Carga el contenido del almacén usando la contraseña proporcionada
                 keyStore.load(fis, keyStorePassword);
             } catch (IOException e) {
+                // Error típico: formato incorrecto o contraseña inválida
                 throw new IOException("Error al cargar el almacén de claves. Verifique la contraseña y el formato.", e);
             }
         } else {
-            keyStore = KeyStore.getInstance("PKCS12"); // Usar PKCS12 por compatibilidad
+            // Si no existe, se crea un nuevo almacén PKCS12 vacío
+            keyStore = KeyStore.getInstance("PKCS12");
             keyStore.load(null, keyStorePassword);
+
+            // Se guarda inmediatamente para crear el archivo en disco
             saveKeyStore();
         }
-
     }
+    /**
+     * Detecta automáticamente el tipo de almacén de claves en base a la extensión del archivo.
+     *
+     * @param path Ruta del archivo del almacén.
+     * @return "PKCS12" si la extensión es .p12 o .pkcs12, "JKS" en caso contrario.
+     */
     private String detectKeyStoreType(String path) {
+        // Retorna el tipo de KeyStore basado en la extensión del archivo
         return path.endsWith(".p12") || path.endsWith(".pkcs12") ? "PKCS12" : "JKS";
     }
 
-    public void listKeys() throws Exception {
-        Enumeration<String> aliases = keyStore.aliases();
-        while (aliases.hasMoreElements()) {
-            System.out.println("Clave: " + aliases.nextElement());
-        }
-    }
-
-//    public void storeKeyPair(String alias, KeyPair keyPair, char[] keyPassword) throws Exception {
-//        X509Certificate certificate = generateSelfSignedCertificate(keyPair);
-//        Certificate[] certChain = new Certificate[]{certificate}; // Asegurar compatibilidad con Certificate[]
-//        keyStore.setKeyEntry(alias, keyPair.getPrivate(), keyPassword, certChain);
-//        saveKeyStore();
-//    }
-
+    /**
+     * Carga un par de claves (pública y privada) desde el KeyStore usando el alias y contraseña.
+     *
+     * @param alias Alias de la entrada que contiene el par de claves.
+     * @param keyPassword Contraseña para acceder a la clave privada.
+     * @return Objeto KeyPair con la clave pública y privada, o null si no se encuentra.
+     * @throws Exception Si ocurre un error al acceder al KeyStore o recuperar la clave.
+     */
     public KeyPair loadKeyPair(String alias, char[] keyPassword) throws Exception {
+        // Se obtiene la clave privada correspondiente al alias
         Key key = keyStore.getKey(alias, keyPassword);
+
+        // Si la clave existe y es privada, se construye el par con su certificado
         if (key instanceof PrivateKey) {
             Certificate cert = keyStore.getCertificate(alias);
             PublicKey publicKey = cert.getPublicKey();
             return new KeyPair(publicKey, (PrivateKey) key);
         }
+
+        // Si no se encuentra clave privada válida, se retorna null
         return null;
     }
-
+    /**
+     * Guarda el estado actual del KeyStore en el archivo definido.
+     *
+     * @throws Exception Si ocurre un error durante la escritura del archivo.
+     */
     private void saveKeyStore() throws Exception {
+        // Guarda el estado del KeyStore en el archivo asociado
         try (FileOutputStream fos = new FileOutputStream(keyStorePath)) {
             keyStore.store(fos, keyStorePassword);
         }
     }
 
-//    private X509Certificate generateSelfSignedCertificate(KeyPair keyPair) throws Exception {
-//        long validity = 365 * 24 * 60 * 60 * 1000L; // 1 año en milisegundos
-//        Date startDate = new Date();
-//        Date expiryDate = new Date(startDate.getTime() + validity);
-//        BigInteger serialNumber = new BigInteger(64, new SecureRandom());
-//        X500Principal dnName = new X500Principal("CN=Self-Signed Certificate");
-//
-//        ContentSigner signer = new JcaContentSignerBuilder("SHA256withRSA").setProvider(BouncyCastleProvider.PROVIDER_NAME)
-//                .build(keyPair.getPrivate());
-//
-//        X509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(
-//                dnName, serialNumber, startDate, expiryDate, dnName, keyPair.getPublic());
-//
-//        return new JcaX509CertificateConverter()
-//                .getCertificate(certBuilder.build(signer));
-//    }
 
-    public static void main(String[] args) throws Exception {
-        Security.addProvider(new BouncyCastleProvider());
-        Scanner scanner = new Scanner(System.in);
-        KeyPair loadedKeyPair = null;
-        //Se carga un par de claves en la variable "keyPair"
-        KeyPair keyPair;
-        String keyPairDefault = "C:\\Users\\USUARIO\\Desktop\\Sergio\\Universidad\\4ºcurso\\SRT\\Practicas\\CryptoEngine\\CryptoEngineSRT\\claves.key";
-        keyPair = loadKeyPairFromFile(keyPairDefault);
-        if(keyPair == null) {
-            System.out.print("Escribe el nombre del fichero donde se guarda el par de claves a utilizar:");
-
-            String KeyPairPath = scanner.nextLine();
-            keyPair = loadKeyPairFromFile(KeyPairPath);
-        }
-        try {
-            System.out.print("Ingrese la ruta del almacén de claves: ");
-            String path = scanner.nextLine();
-
-            System.out.print("Ingrese la contraseña del almacén de claves: ");
-            char[] password = scanner.nextLine().toCharArray();
-
-            KeyStoreManager manager = new KeyStoreManager(path, password);
-
-            while (true) {
-                System.out.println("\nAplicación de Criptografía");
-                System.out.println("1. Listar claves del KeyStore");
-                System.out.println("2. Agregar nueva clave al KeyStore (no esta desarrollado)");
-                System.out.println("3. Cargar par de claves del KeyStore");
-                System.out.println("4. Cargar par de claves desde un fichero");
-                System.out.println("5. Firmar archivo");
-                System.out.println("6. Verificar firma");
-                System.out.println("7. Cifrar archivo con par de claves");
-                System.out.println("8. Descifrar archivo con un par de claves");
-                System.out.println("9. Mostrar MENU DE OPCIONES ASIMETRICAS");
-                System.out.println("10. Salir");
-                System.out.print("Seleccione una opción: ");
-
-                int option = scanner.nextInt();
-                scanner.nextLine(); // Consumir el salto de línea
-
-                switch (option) {
-                    case 1:
-                        manager.listKeys();
-                        break;
-                    case 2:
-                        //TODO
-                        System.out.print("Ingrese alias de la clave: ");
-                        String alias = scanner.nextLine();
-                        keyPair = generateKeyPair(scanner);
-//                        manager.storeKeyPair(alias, keyPair, password);
-                        System.out.println("Clave almacenada con éxito.");
-                        break;
-                    case 3:
-                        manager.listKeys();
-                        System.out.print("Ingrese alias de la clave: ");
-                        alias = scanner.nextLine();
-                        keyPair = manager.loadKeyPair(alias, password);
-                        if (keyPair != null) {
-                            System.out.println("Clave cargada con éxito.");
-                            System.out.println(keyPair.getPublic().getAlgorithm());
-                            System.out.println(keyPair.getPrivate().getAlgorithm());
-                        } else {
-                            System.out.println("Clave no encontrada.");
-                        }
-                        break;
-                    case 4:
-                        System.out.println("Cargando el par de claves desde un fichero ...");
-                        keyPair=InterfazGraficaP4.logicaCargarClaves(scanner);
-                        break;
-                    case 5:
-                        System.out.println("Firmando archivo...");
-                        InterfazGraficaP4.logicaFirmarArchivo(scanner, keyPair);
-                        break;
-                    case 6:
-                        System.out.println("Verificando firma...");
-                        InterfazGraficaP4.logicaVerificarFirmaArchivo(scanner, keyPair);
-                        break;
-                    case 7:
-                        System.out.println("Cifrando archivo...");
-                        InterfazGraficaP4.logicaEncriptarFichero(scanner, keyPair);
-                        break;
-                    case 8:
-                        System.out.println("Descifrando archivo...");
-                        InterfazGraficaP4.logicaDescifrarArchivo(scanner, keyPair);
-                        break;
-                    case 9:
-                        mostrarSubmenuAsimetrico(scanner);
-                        break;
-                    case 10:
-                        System.out.println("Saliendo...");
-                        scanner.close();
-                        return;
-                    default:
-                        System.out.println("Opción no válida.");
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static KeyPair generateKeyPair(Scanner scanner) throws Exception {
-        System.out.println("Seleccione el tipo de clave (RSA o DSA): ");
-        String keyType = scanner.nextLine().toUpperCase();
-        if (!keyType.equals("RSA") && !keyType.equals("DSA")) {
-            System.out.println("Tipo de clave no válido.");
-            return null;
-        }
-
-        System.out.println("Seleccione la longitud de la clave (512, 768, 1024 bits): ");
-        int keySize = scanner.nextInt();
-        scanner.nextLine(); // Limpiar buffer
-        if (keySize != 512 && keySize != 768 && keySize != 1024) {
-            System.out.println("Longitud de clave no válida.");
-            return null;
-        }
-        KeyPairGenerator keyGen = KeyPairGenerator.getInstance(keyType);
-        keyGen.initialize(keySize);
-        return keyGen.generateKeyPair();
-    }
 }

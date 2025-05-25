@@ -5,6 +5,7 @@ package librerias;
 * @version 1.0, 2022
 */
 import java.io.*;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -37,17 +38,28 @@ public class Header extends BasicHeader {
 
   private byte hashPassword[];
 
+	public Header(byte[] hashPassword, String algorithm1, byte operation) throws NoSuchAlgorithmException {
+		this.hashPassword = hashPassword;
+		this.algorithm1 = algorithm1;
+		this.algorithm2 = Options.authenticationAlgorithms[0];
+		this.data = new byte[8];
+		SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
+		this.data = random.generateSeed(8);
+		System.out.println(Arrays.toString(this.data));
+		this.operation = operation;
 
-  /**
+	}
+
+	/**
    * Constructor por defecto.    
    */
-  public Header() {
+  public Header() throws NoSuchAlgorithmException {
     algorithm1 = Options.cipherAlgorithms[0];
     algorithm2 = Options.authenticationAlgorithms[0];
     operation  = Options.OP_NONE;
 	  data = new byte[8];
-	  SecureRandom random = new SecureRandom();
-	  random.nextBytes(data);
+	  SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
+	  data = random.generateSeed(8);
 //    data = new byte[] { 0x7d, 0x60, 0x43, 0x5f, 0x02, 0x09, 0x0f, 0x0a};
 	hashPassword = new byte[] { 0x7d, 0x60, 0x43, 0x5f, 0x02, 0x09, 0x0f, 0x0a};
   }
@@ -64,6 +76,7 @@ public class Header extends BasicHeader {
      this.data = data;
 	 this.hashPassword = new byte[] { 0x7d, 0x60, 0x43, 0x5f, 0x02, 0x09, 0x0f, 0x0a};
   }
+
 
 	public Header(byte operation,String algorithm1, String algorithm2,  byte[] data, byte[] hashPassword) {
 		this.operation  = operation;
@@ -94,8 +107,20 @@ public class Header extends BasicHeader {
 	    data = newData;
   }
   public void setHashPassword(byte[]newHashPassword) { hashPassword = newHashPassword; }
-  
-  /**
+
+	public void setAlgorithm2(String algorithm2) {
+		this.algorithm2 = algorithm2;
+	}
+
+	public void setAlgorithm1(String algorithm1) {
+		this.algorithm1 = algorithm1;
+	}
+
+	public void setOperation(byte operation) {
+		this.operation = operation;
+	}
+
+	/**
    * Intenta cargar los datos de una cabecera desde un InputStream ya abierto.   
    * Si tiene exito, los datos quedan en la clase.
    * @param r el InputStream abierto.
@@ -125,13 +150,7 @@ public class Header extends BasicHeader {
 		          algorithm2 = Options.authenticationAlgorithms[buffer[i++]];
 				  System.out.println("Algorithm2: " + algorithm2);
 				  System.out.println("Inicialización de la bandera i: " + i);
-		          /*int dataLength = (buffer[i]>=0) ? buffer[i] : (buffer[i]+256);
-		          i++;
-		          data = Arrays.copyOfRange(buffer,i,i+dataLength);
-				  i+= (short) dataLength;
-				  int hashPasswordLength = (buffer[i]>=0) ? buffer[i] : (buffer[i]+256);
-				  i++;
-				  hashPassword = Arrays.copyOfRange(buffer,i,i+hashPasswordLength);*/
+
 				  if (i < buffer.length) {
 
 					  int dataLength = (buffer[i] >= 0) ? buffer[i] : (buffer[i] + 256);
