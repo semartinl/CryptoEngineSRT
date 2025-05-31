@@ -113,7 +113,6 @@ public class Encryption {
 
             }
             else {
-                System.out.println("Error: El fichero no se encuentra cifrado");
                 throw new Exception("Error: El fichero no se encuentra cifrado");
 
             }
