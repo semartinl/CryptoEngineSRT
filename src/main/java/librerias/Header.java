@@ -45,7 +45,7 @@ public class Header extends BasicHeader {
 		this.data = new byte[8];
 		SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
 		this.data = random.generateSeed(8);
-		System.out.println(Arrays.toString(this.data));
+
 		this.operation = operation;
 
 	}
@@ -60,7 +60,6 @@ public class Header extends BasicHeader {
 	  data = new byte[8];
 	  SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
 	  data = random.generateSeed(8);
-//    data = new byte[] { 0x7d, 0x60, 0x43, 0x5f, 0x02, 0x09, 0x0f, 0x0a};
 	hashPassword = new byte[] { 0x7d, 0x60, 0x43, 0x5f, 0x02, 0x09, 0x0f, 0x0a};
   }
   /**
@@ -123,7 +122,7 @@ public class Header extends BasicHeader {
 	/**
    * Intenta cargar los datos de una cabecera desde un InputStream ya abierto.   
    * Si tiene exito, los datos quedan en la clase.
-   * @param r el InputStream abierto.
+   * @param is el InputStream abierto.
    * @throws Exception  Si ocurre un error de entrada o salida.
    * @return true si la carga es correcta, false en otro caso
    */
@@ -188,7 +187,7 @@ public class Header extends BasicHeader {
   
   /**
    * Intenta guardar la cabecera actual en un OutputStream ya abierto.
-   * @param fos el OutputStream abierto
+   * @param os el OutputStream abierto
    * @throws Exception  Si ocurre un error de entrada o salida.
    * @return true si tiene exito, false en otro caso
    */

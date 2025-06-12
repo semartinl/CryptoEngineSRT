@@ -1,10 +1,10 @@
 package Actividad5;
 
-import DigitalSignature.DigitalSignature;
-import DigitalSignature.Encryption;
-import Resumen_hash.FileProtectorMac;
-import actividad2.PBEActivity;
-import actividad2.PasswordStrength;
+import Actividad4.DigitalSignature;
+import Actividad4.Encryption;
+import Actividad3.FileProtectorMac;
+import Actividad2.PBEActivity;
+import Actividad2.PasswordStrength;
 import librerias.Options;
 
 import javax.swing.*;
@@ -15,7 +15,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.util.Enumeration;
 
-import static actividad2.PBEActivity.calcularHash;
+import static Actividad2.PBEActivity.calcularHash;
 /**
  * Clase principal que representa la interfaz gráfica de usuario (GUI) para la aplicación
  * de protección de archivos. Integra funcionalidades como cifrado, hash, HMAC, firma digital,
@@ -131,16 +131,22 @@ public class MainGUI extends JFrame{
             try {
                 byte[] hash = calcularHash(pass);
                 if (PBEActivity.verifyPasswordHash(input, hash)) {
-                    PBEActivity.processingDecipher(input, pass, it);
-                    mostrar("Archivo descifrado correctamente.");
+                    try{
+                        PBEActivity.processingDecipher(input, pass, it);
+                        mostrar("Archivo descifrado correctamente.");
+                    }catch (Exception ex){
+                        mostrar("Error: " + ex.getMessage());
+                    }
+
                 } else {
-                    mostrar("Contraseña incorrecta.");
+                    mostrar("Contraseña incorrecta");
                 }
             } catch (Exception ex) {
                 mostrar("Error: " + ex.getMessage());
             }
         });
 
+        //Logica para seleccionar el archivo a cifrar o descifrar.
         btnSeleccionarArchivo.addActionListener(e -> {
             JFileChooser fileChooser = new JFileChooser(actualPath);
             fileChooser.setDialogTitle("Seleccionar archivo de entrada");
@@ -254,7 +260,7 @@ public class MainGUI extends JFrame{
             try {
                 String alg = algoritmoHash;
                 boolean ok = protector.verifyHash(rutaArchivoLabel.getText(), output.getText(), pass.getText(), alg);
-//                mostrar("Archivo verificado correctamente.");
+
                 if (ok) {
                     JOptionPane.showMessageDialog(this,
                             "✅ El resumen coincide.\nEl documento no ha sido modificado.",
